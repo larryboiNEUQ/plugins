@@ -18,6 +18,9 @@ jobs:
           ref: main
           fetch-depth: 0
           token: ${{ secrets.SYNC_TOKEN || github.token }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Sync upstream main
         env:
           GH_TOKEN: ${{ github.token }}
@@ -37,13 +40,15 @@ jobs:
           fi
           UPSTREAM_SHA=$(git rev-parse --short FETCH_HEAD)
           node scripts/generate-pi-harness.mjs
-          if ! git diff --quiet -- harness/pi; then
-            git add harness/pi
+          git add -- harness/pi/pstack
+          if ! git diff --cached --quiet -- harness/pi/pstack; then
             git commit -m "chore(pi): regenerate harness for upstream $UPSTREAM_SHA"
           fi
           node scripts/generate-pi-harness.mjs --check
           node scripts/generate-pstack-harness-trees.mjs --check
           node --test scripts/generate-pi-harness.test.mjs
+          npm ci --prefix scripts/pi-sdk --ignore-scripts
+          PI_HARNESS_SDK="$GITHUB_WORKSPACE/scripts/pi-sdk/node_modules/@earendil-works/pi-coding-agent/dist/index.js" node --test scripts/pi-harness-sdk.test.mjs
           git push origin main
       - name: Report sync failure
         if: failure()
