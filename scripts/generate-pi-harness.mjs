@@ -48,7 +48,7 @@ if (process.argv.includes("--print-terms")) {
 }
 
 const EXCLUDE = new Set(["make-bot-ui"]);
-const RENAME = new Map([["tdd", "pstack-tdd"], ["teach", "pstack-teach"]]);
+const emittedName = (name) => `pstack-${name}`;
 const KIT_SKILLS = ["control-cli", "control-ui", "deslop"];
 
 const PI_NOTICE = (href) =>
@@ -57,14 +57,14 @@ const PI_NOTICE = (href) =>
 const PI_README_NOTE =
   "This is a generated local Pi package. Install it with `pi install git:github.com/larryboiNEUQ/plugins` " +
   "or `pi install /path/to/plugins` for a local checkout, which registers its skills and, with Tintinweb, its agents. " +
-  "Older skill links or agent files with the same names take precedence and must be removed first. " +
-  "Personal model and subscription examples are not installed automatically.";
-const PI_EXAMPLE_NOTE =
-  "This is an optional snapshot of the reference installation, not a Pi default or a live availability or quota check. " +
-  "Generation does not apply it. Existing user configuration takes precedence.";
+  "All package skills use the pstack- prefix. Start with `/skill:pstack-poteto-mode`; model setup is " +
+  "`/skill:pstack-setup-pstack`. Personal model mappings stay in ~/.pi/agent/pstack/models.md and are changed only " +
+  "by an approved setup. Updating the package does not remove older unprefixed pstack resources.";
 const PI_AGENT_NOTE =
-  "Before judging, read the caller-supplied absolute poteto-mode SKILL.md and the Pi mapping at ../../docs/harness/pi.md " +
-  "relative to that skill directory. If the path is missing, report it before following Cursor-specific instructions.";
+  "In Pi, read the caller-supplied absolute pstack-poteto-mode SKILL.md and the Pi adapter at ../../docs/harness/pi.md " +
+  "relative to that skill directory before following this agent. The adapter overrides Cursor-specific instructions, " +
+  "names, and paths below. If no skill path was supplied, locate skills/pstack-poteto-mode/SKILL.md in this installed " +
+  "Pi package rather than a Cursor cache. If the package cannot be identified, report the missing path before working.";
 
 function walk(dir) {
   return readdirSync(dir).flatMap((name) => {
@@ -109,15 +109,20 @@ function insertAfterH1(text, paragraph) {
   return `${paragraph}\n\n${text}`;
 }
 
-function piCommentSicko() {
-  const text = readFileSync(join(PSTACK, "agents", "comment-sicko.md"), "utf8");
+const AGENT_SOURCES = [
+  ["poteto-agent.md", "pstack-poteto-agent", "pstack-poteto-agent, pstack-readonly, pstack-comment-sicko"],
+  ["comment-sicko.md", "pstack-comment-sicko", "pstack-readonly, pstack-poteto-agent"],
+];
+
+function piAgent(src, emitted, subagents) {
+  const text = readFileSync(join(PSTACK, "agents", src), "utf8");
   const description = text.match(/^description:(.*)$/m)?.[1].trim() ?? "";
   const body = text.replace(/^---\n[\s\S]*?\n---\n*/, "");
   const frontmatter =
-    "---\nname: comment-sicko\n" +
+    `---\nname: ${emitted}\n` +
     `description: ${description}\n` +
-    "extensions: true\nskills: true\nallowed_subagents: pstack-readonly, poteto-agent\nprompt_mode: replace\n---";
-  return `${frontmatter}\n\n${body.replace(/^(# .*)/m, `${PI_AGENT_NOTE}\n\n$1`)}`;
+    `extensions: true\nskills: true\nallowed_subagents: ${subagents}\nprompt_mode: replace\n---`;
+  return `${frontmatter}\n\n${PI_AGENT_NOTE}\n\n${body}`;
 }
 
 const problems = [];
@@ -127,6 +132,7 @@ for (const [skill, { usesCursorNames, wrap }] of classes) {
   const name = frontmatter.match(/^name:(.*)$/m)?.[1].trim().replace(/^(["'])(.*)\1$/, "$2");
   if (name !== skill) problems.push(`skills/${skill}/SKILL.md has name ${JSON.stringify(name ?? "")}, not its folder name ${skill}`);
   if (!SKILL_NAME.test(skill) || skill.length > 64) problems.push(`skills/${skill} is not lowercase words joined by hyphens, at most 64 characters`);
+  if (!EXCLUDE.has(skill) && emittedName(skill).length > 64) problems.push(`skills/${skill} emits as ${emittedName(skill)}, over 64 characters`);
 }
 for (const [skill, { usesCursorNames, wrap }] of kitClasses) {
   const label = `cursor-team-kit/skills/${skill}`;
@@ -186,19 +192,19 @@ function put(emitted, src, override) {
 
 for (const skill of skills) {
   if (EXCLUDE.has(skill)) continue;
-  const renamed = RENAME.get(skill) ?? skill;
   for (const path of walk(join(SKILLS, skill))) {
-    put(`skills/${renamed}/${relative(join(SKILLS, skill), path)}`, relative(ROOT, path));
+    put(`skills/${emittedName(skill)}/${relative(join(SKILLS, skill), path)}`, relative(ROOT, path));
   }
 }
 for (const name of KIT_SKILLS) {
   for (const path of walk(join(KIT, "skills", name))) {
-    put(`skills/${name}/${relative(join(KIT, "skills", name), path)}`, relative(ROOT, path));
+    put(`skills/${emittedName(name)}/${relative(join(KIT, "skills", name), path)}`, relative(ROOT, path));
   }
 }
-put("agents/poteto-agent.md", "pstack/docs/harness/pi/agents/poteto-agent.md");
+for (const [src, emitted, subagents] of AGENT_SOURCES) {
+  put(`agents/${emitted}.md`, `pstack/agents/${src}`, { bytes: Buffer.from(piAgent(src, emitted, subagents)), executable: false });
+}
 put("agents/pstack-readonly.md", "pstack/docs/harness/pi/agents/pstack-readonly.md");
-put("agents/comment-sicko.md", "pstack/agents/comment-sicko.md", { bytes: Buffer.from(piCommentSicko()), executable: false });
 for (const path of walk(join(PSTACK, GUIDE))) {
   put(`${GUIDE}/${relative(join(PSTACK, GUIDE), path)}`, relative(ROOT, path));
 }
@@ -206,16 +212,6 @@ put(ADAPTER, `pstack/${ADAPTER}`);
 put("README.md", "pstack/README.md");
 put("LICENSE", "pstack/LICENSE");
 put("LICENSE-cursor-team-kit", "cursor-team-kit/LICENSE");
-put("config/roles.json", "pstack/docs/harness/pi/roles.json");
-for (const example of ["models", "subscriptions"]) {
-  put(
-    `config/examples/current-installation/${example}.md`,
-    `pstack/docs/harness/pi/examples/current-installation/${example}.md`,
-    (entry) => {
-      entry.bytes = Buffer.from(`${PI_EXAMPLE_NOTE}\n\n${entry.bytes.toString("utf8")}`);
-    },
-  );
-}
 const plugin = JSON.parse(readFileSync(join(PSTACK, "plugin.json"), "utf8"));
 put("package.json", "pstack/plugin.json", {
   bytes: Buffer.from(
@@ -234,19 +230,17 @@ put("package.json", "pstack/plugin.json", {
   executable: false,
 });
 
-for (const [, emitted] of RENAME) {
-  const path = `skills/${emitted}/SKILL.md`;
-  const entry = files.get(path);
+for (const skill of [...skills.filter((name) => !EXCLUDE.has(name)), ...KIT_SKILLS]) {
+  const emitted = `skills/${emittedName(skill)}/SKILL.md`;
+  const entry = files.get(emitted);
   entry.bytes = Buffer.from(
-    entry.bytes.toString("utf8").replace(/^---\n[\s\S]*?\n---/, (frontmatter) =>
-      frontmatter.replace(/^name:.*$/m, `name: ${emitted}`),
+    insertAfterH1(
+      entry.bytes.toString("utf8").replace(/^---\n[\s\S]*?\n---/, (frontmatter) =>
+        frontmatter.replace(/^name:.*$/m, `name: ${emittedName(skill)}`),
+      ),
+      PI_NOTICE(posix.relative(posix.dirname(emitted), ADAPTER)),
     ),
   );
-}
-for (const skill of [...skills.filter((name) => !EXCLUDE.has(name)), ...KIT_SKILLS]) {
-  const emitted = `skills/${RENAME.get(skill) ?? skill}/SKILL.md`;
-  const entry = files.get(emitted);
-  entry.bytes = Buffer.from(insertAfterH1(entry.bytes.toString("utf8"), PI_NOTICE(posix.relative(posix.dirname(emitted), ADAPTER))));
 }
 for (const emitted of ["README.md", ...[...files.keys()].filter((key) => key.startsWith(`${GUIDE}/`) && key.endsWith(".md"))]) {
   const notice = PI_NOTICE(posix.relative(posix.dirname(emitted), ADAPTER));

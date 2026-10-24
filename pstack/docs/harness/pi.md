@@ -12,13 +12,13 @@ This edition targets Pi with the Tintinweb `@tintinweb/pi-subagents` extension. 
 | --- | --- | --- |
 | Pi | Explicit `/skill:<name>` commands, skill names and discovery, session entries, and local package skill resources. | Pi with compatible skill loading. No extra runner is implied. |
 | Tintinweb extension | `Agent`, the three agent definitions, per-call model and thinking fields, background results, steering, nested-agent permissions, and native worktrees. | The named extension with these capabilities. Check its actual tool schema. |
-| This pstack edition | Role-table format, root-main inheritance and fallback, explicit invocation without persistent mode, privacy checks, and reporting unavailable features. | These are package policies, not guarantees enforced by Pi. |
-| Current installation choices | Prefixed packaged `tdd` and `teach`, shared skill directories, mixed per-role thinking, model providers, quota priorities, and Mermaid-first visuals. | Keep or change these explicitly. They are not requirements of Pi. |
+| This pstack edition | The `pstack-` resource prefix, family model mapping, root-main inheritance and fallback, explicit invocation without persistent mode, privacy checks, and reporting unavailable features. | These are package policies, not guarantees enforced by Pi. |
+| Current installation choices | Shared skill directories, model providers, optional thinking overrides, and Mermaid-first visuals. | Keep or change these explicitly. They are not requirements of Pi. |
 | Optional installed extensions and skills | Inline skill expansion, `ask_user_question`, pi-goal, ego-browser, and writing-for-agents. | Use them only when available and appropriate. Report absence instead of installing replacements. |
 | Operating system | Linux measurement commands and possible macOS alternatives. | Check the command on the current machine. A dated observation is not a platform guarantee. |
 | Unsupported Cursor features | Cursor cloud execution, Automations, Benny, make-bot-ui, a built-in PR tool, persistent mode, and timed `/loop` wakes. | Report the unavailable step and any dependent result. Do not simulate success. |
 
-The example model table and subscription profile under `config/examples/current-installation/` preserve the reference installation's choices. They are not live model availability or remaining-quota measurements. Generation does not install them or change an existing user table.
+Personal model mappings stay in the user-owned `~/.pi/agent/pstack/models.md`. This package ships no personal model defaults, subscription profile, or copied role catalog. An existing `subscriptions.md` is unused and stays untouched.
 
 ## Generate and load
 
@@ -26,17 +26,17 @@ Run `node scripts/generate-pi-harness.mjs` from the repository root. Run the sam
 
 The generated package declares its skills for Pi and its three agents for Tintinweb through `pi.subagents`. Install from the repository root, `pi install git:github.com/larryboiNEUQ/plugins` or `pi install /path/to/plugins` for a local checkout, so the whole generated tree stays together. Tintinweb registers the agents only when the package is installed through Pi settings packages and `packageAgents` allows it. A local agent file with the same name in the Pi agent directory, `.agents/agents/`, or `.pi/agents/` overrides a package agent, and a user or project skill with the same name overrides a package skill, so remove or rename an older copy before relying on this edition, after asking. Linking each generated skill folder on its own breaks the relative mapping path.
 
-Keep the complete generated directory together so its mapping reference, guide, licenses, and local links stay available. Do not install both the original pstack skills and this edition under the same names.
+Keep the complete generated directory together so its mapping reference, guide, licenses, and local links stay available. Older unprefixed pstack resources are not aliases for this package. Updating it does not remove those resources or migrate user configuration.
 
 ## Invoke skills and resolve names
 
-- Use `/skill:poteto-mode <task>` explicitly. The main conversation runs the selected playbook. This package supplies no persistent mode, automatic per-turn reminder, or root-chat background routing.
-- Map an upstream `/name` instruction to `/skill:<name>`. When following a sibling skill yourself, read its local `SKILL.md`. Resolve relative paths from the skill's directory.
+- Use `/skill:pstack-poteto-mode <task>` explicitly. The main conversation runs the selected playbook. This package supplies no persistent mode, automatic per-turn reminder, or root-chat background routing.
+- Every packaged skill has `pstack-` before its upstream name, including the bundled control-cli, control-ui, and deslop skills. Map an upstream `/name` or "the **name** skill" instruction to `/skill:pstack-<name>` and `<pstack>/skills/pstack-<name>/SKILL.md`. For example, setup-pstack is `/skill:pstack-setup-pstack`. Do not add the prefix again to an already resolved package name.
+- Generated Markdown links already point to the renamed resources. Resolve them from the containing file. For literal upstream paths such as `../<name>/SKILL.md` or `skills/poteto-mode/SKILL.md`, apply the same skill-folder mapping. Pass the actual absolute `pstack-poteto-mode/SKILL.md` path to delegates.
 - `disable-model-invocation` hides automatic discovery. It does not make a skill unavailable to explicit invocation or file reads.
-- Inline `$<name>` expansion depends on the user's installed inline-skill extension. It is not provided by this package.
-- Within pstack workflows, the upstream `tdd` and `teach` skills mean the packaged `pstack-tdd` and `pstack-teach`. This includes the bug-fix playbook's reference to the **tdd** skill. Use `/skill:pstack-tdd` and `/skill:pstack-teach` when directing the user.
-- A user's explicit `/skill:tdd` or `/skill:teach` still means their separate external skill. Do not replace, recreate, or overwrite it. This naming policy preserves the reference installation's Matt Pocock skills. It is not a Pi naming requirement.
-- `pstack-teach` uses the existing how and why roles. It does not introduce another model role.
+- Inline `$pstack-<name>` expansion depends on the user's installed inline-skill extension. It is not provided by this package.
+- Unprefixed commands remain the user's external skills. They are not package aliases. Search and completion may match an upstream name inside its prefixed name, but execution uses the completed `/skill:pstack-<name>` command.
+- `pstack-teach` follows upstream's how and why roles. This adapter adds no model roles.
 - `todolist` means a checklist with the selected playbook's steps. If a todo tool is absent, maintain it in the conversation. Keep skipped steps with reasons.
 
 ## Map tools and subagent fields
@@ -47,9 +47,9 @@ The rows in this section require Tintinweb. Check the installed schema before us
 | --- | --- |
 | `Task` | `Agent` |
 | `generalPurpose`, `readonly: true` | `subagent_type: "pstack-readonly"` |
-| `generalPurpose`, `readonly: false` | `subagent_type: "poteto-agent"` with inherited extension tools |
-| `poteto-agent` | `subagent_type: "poteto-agent"` |
-| `comment-sicko` | `subagent_type: "comment-sicko"` |
+| `generalPurpose`, `readonly: false` | `subagent_type: "pstack-poteto-agent"` with inherited extension tools |
+| `poteto-agent` | `subagent_type: "pstack-poteto-agent"` |
+| `comment-sicko` | `subagent_type: "pstack-comment-sicko"` |
 | `run_in_background: true` | `run_in_background: true` for top-level delegates |
 | `resume` | Resume a completed agent by its returned ID only when costly local state is needed. Otherwise start fresh. |
 | Interrupt a running agent | `steer_subagent` with its `agent_id` and the new message |
@@ -62,7 +62,7 @@ The rows in this section require Tintinweb. Check the installed schema before us
 | `Grep`, `Glob` | Use the host's read and search tools. Tool names depend on the host. |
 | Run another pstack skill | Read `<pstack>/skills/<name>/SKILL.md`, applying the packaged tdd and teach aliases above. |
 
-Pass a description, a self-contained task, the absolute path to the generated `poteto-mode/SKILL.md`, and the resolved model and thinking. Do not pass Cursor-only `readonly` or `environment` fields.
+Pass a description, a self-contained task, the absolute path to the generated `pstack-poteto-mode/SKILL.md`, and the resolved model and thinking. Do not pass Cursor-only `readonly` or `environment` fields.
 
 Start a fresh agent for new work, retries, and fix rounds. Reuse a completed agent only for costly state that is still inside it, such as a checkout, uncommitted work, or a running process. Do not resume a running agent. Steer it.
 
@@ -74,20 +74,24 @@ For concurrent writers, use the extension's native `isolation: "worktree"`. Comm
 
 ## Select models and thinking
 
-The Cursor `pstack-models.mdc` rule maps to the user-owned `~/.pi/agent/pstack/models.md`. Read it explicitly before the first role-based delegation. Pi does not automatically apply Cursor `.mdc` rules. The role catalog is `<pstack>/config/roles.json`.
+The Cursor `pstack-models.mdc` rule maps to the user-owned `~/.pi/agent/pstack/models.md`. Read it explicitly before the first role-based delegation. Pi does not automatically apply Cursor `.mdc` rules. These are instructions for the calling agent, not an automatic model-routing extension.
 
-Each line is `<full role label>: <provider/model>:<thinking>`, or a comma-separated list of model values. Match the full role label because a role label itself can contain commas. Split only the final thinking suffix from a model value. Pass `model: "provider/model"` and `thinking: "level"` separately.
+The table normally has two lines, `grok: <provider/model>[:<thinking>]` and `opus: <provider/model>[:<thinking>]`. A value may also be `auto` or `inherit-parent`. A family line selects one model. Optional role overrides use `<full upstream role label>: <value>` or a comma-separated list of values. Match the full label before the first colon because role labels themselves can contain commas. Do not split role labels at commas. Split only a recognized final thinking suffix from a model value. Pass `model: "provider/model"` and `thinking: "level"` separately.
 
-- Preserve an existing table's exact provider/model identities, per-role thinking, panel lists, `auto`, and `inherit-parent`.
-- A missing table, missing role, `auto`, or `inherit-parent` uses the root main conversation model in this edition. Do not apply the personal example table automatically.
-- At the root, omit `model` for inheritance. Record the known exact root-main provider/model and thinking in every delegate's brief. Inside a nested delegate, pass that recorded root-main identity explicitly. If it is unknown, return model selection to the root rather than inheriting the immediate delegate's model by accident.
-- Validate explicit model identities against the authenticated list from `pi --list-models`. Do not guess from Cursor's `claude-*`, `grok-*`, or `gpt-*` slugs. Do not append or remove `-fast`.
-- Treat `max` to `xhigh` as this edition's compatibility choice when the host does not accept `max`. Adjust the separate thinking field only when supported and requested. Do not change a provider/model identity to adjust effort.
-- Inspect returned effective model and thinking. A silent substitution is not a successful configured-model run. If effective values are unavailable, say so rather than claiming they matched.
-- Start one agent per panel list entry. Choose cross-judges from a different model family than root-main when possible. Family means the model family, not its provider. Disclose reduced independence when a distinct family is unavailable.
-- The role catalog includes adapter roles for recall slices, automate-me slices, verification source wave, and comment sicko. A coordinator remains on the main conversation model.
+Resolve each delegation in this order:
 
-The reference installation uses Sol for much implementation and judgment, SWE for small mechanical blocks, and other families for some review seats. Those allocations and their mixed thinking levels are personal choices preserved only in the example. Without an accepted table, report that inherited seats may not provide model diversity.
+1. Use an exact role override, if present. Keep its identities, thinking overrides, aliases, and panel entries.
+2. Otherwise read that role's default from the current upstream skill or setup-pstack text. Map every `grok-*` slug through `grok`, and every `claude-opus-*` slug through `opus`. Preserve the upstream panel length and entry order. Read the defaults where they are defined, not from a separate role catalog. New roles using either family need no local table change.
+3. Without an explicit thinking override, use the effort in the upstream slug, after removing a trailing `-fast` for parsing only. `grok-4.7-xhigh-fast` means `xhigh`; `claude-opus-5-5-medium` means `medium`. A model value's explicit thinking suffix takes precedence. An explicit role model without a suffix follows its upstream effort when one is defined.
+4. For a missing family mapping, an unmapped `claude-*` family, `gpt-*`, any other unmapped slug, `auto`, or `inherit-parent`, use root-main inheritance and report it. Never guess a provider/model from a Cursor slug.
+
+Validate explicit identities against `pi --list-models` before calling. A listed model is not proof of remaining quota. If the command fails, return selection to the root and report the gap. Drop Cursor's fast-mode choice without changing the configured provider/model identity. Map `max` to `xhigh` only when the host lacks `max`, and report that choice. Use only supported thinking values. If the requested effort is rejected or cannot be established, report the gap instead of silently lowering it or changing models.
+
+At the root, omit `model` and `thinking` for inheritance. Record the known exact root-main provider/model and thinking in every delegate's brief. Inside a nested delegate, pass that recorded root-main identity explicitly. If it is unknown, return model selection to the root instead of inheriting the immediate delegate's model.
+
+Inspect effective model and thinking from host result records when available. Report unknown values as unknown. A silent substitution is not a successful configured-model run. Start one agent per upstream panel entry, even if several entries resolve to the same model. Choose cross-judges from a different actual model family where possible, and disclose reduced independence when no distinct family is available.
+
+Legacy role-only tables remain valid explicit overrides. Report missing family mappings and offer setup rather than silently replacing the file. Setup can migrate to two family lines after approval. Subscription profiles are not read, generated, or rewritten.
 
 ## Handle model failures
 
@@ -100,16 +104,16 @@ This overrides upstream same-family, closest-slug, and Sonnet fallback instructi
 
 ## Run setup-pstack
 
-Follow the original setup skill with these replacements. This section replaces its Cursor model detection, default-table, budget, and write steps. Keep its applicable optional verification offers.
+Invoke `/skill:pstack-setup-pstack`. This section replaces the original skill's model detection, role-table, budget, and write steps. Keep its applicable optional verification offers. The setup remains an agent workflow, not executable configuration code.
 
-1. Read `<pstack>/config/roles.json` and the existing `~/.pi/agent/pstack/models.md` and `subscriptions.md`, if present. Preserve their current choices. The labeled example is an optional starting point only if the user explicitly chooses it.
-2. Run `pi --list-models`. A failed command stops the write. Cached examples and fuzzy names do not prove current availability.
-3. Propose the whole role table. With no accepted choices, use root-main inheritance and explain reduced panel diversity. Preserve mixed thinking. Ask for a uniform budget only when the user requests one. Map unlimited to `xhigh` when `max` is unsupported, large to `xhigh`, medium to `high`, and small to `medium`, without changing model identities. Show any compatibility mapping.
-4. Show current and proposed values, role purposes, reasons, unavailable identities, removed roles, thinking, and panel diversity. A subscription or quota change requests a proposal, not an immediate write. Prefer quota-based reallocation only when requested.
-5. Ask the user to accept the table, edit rows, or cancel. Use an available question tool or plain text. A request for a smoke test is not approval to write.
-6. Refresh the model list before writing. Validate exact identities, role labels, panel entries, and supported thinking values against the accepted proposal. Reject unavailable values and unresolved `max`. Never write Cursor slugs.
-7. Back up every existing file that will change. Stage and reread the accepted contents beside the destination before replacement. Preserve backups on failure and report partial state. Write only the approved model table and subscription changes.
-8. Report the effective table, backups, inherited roles, any requested uniform budget, compatibility choices, and reduced diversity. Re-running setup preserves user choices rather than resetting them to the example.
+1. Read the existing `~/.pi/agent/pstack/models.md`, if present. Leave `subscriptions.md` and all credentials alone.
+2. Run `pi --list-models`. A failed command stops the write. Validate exact provider/model identities from this result, not cached examples or fuzzy names.
+3. Ask which available model maps to Grok and which maps to Opus. Preserve existing family choices on reruns. With no accepted choice, propose `inherit-parent` and explain reduced panel diversity. Do not infer a user's subscriptions from provider names.
+4. Normally propose only the two family lines without thinking suffixes, so upstream retains its role assignments and effort choices. Offer a fixed thinking suffix or role override only when requested. Preserve existing role overrides unless the user approves removing them. For a legacy role-only table, show every row that migration would remove. Read upstream role definitions as needed instead of maintaining a copied list.
+5. Show the current and proposed file, exact model identities, thinking behavior, aliases, unavailable entries, removed rows, and panel diversity. Ask the user to accept, edit, or cancel before writing. A setup invocation or smoke-test request alone does not approve replacement.
+6. Refresh availability before writing. Validate the accepted identities and supported thinking values. Resolve any unsupported `max` explicitly. If a value is unavailable, stop the write and ask for another choice.
+7. Back up the existing model table before replacing it. Stage and reread the approved contents beside the destination, then replace only that table. Write no frontmatter, only optional comments, the two family lines, and approved role overrides. Preserve the backup on failure and report partial state.
+8. Report the written table, backup path, inheritance, thinking overrides, and any reduced panel diversity. Rerunning setup preserves current choices until a replacement is approved.
 
 Setup does not edit Pi settings, authentication, installed extensions, or agent definitions. Agent definitions contain no fixed model or thinking.
 
@@ -118,7 +122,7 @@ Setup does not edit Pi settings, authentication, installed extensions, or agent 
 | Cursor path or instruction | Pi path or policy |
 | --- | --- |
 | `.cursor/skills/`, `~/.cursor/skills/` | Use the current host's configured skill directories. The reference installation uses shared `.agents/skills/`. Ask before changing shared user resources. |
-| `~/.cursor/plugins/`, `.cursor-plugin/plugin.json` | Use the caller's absolute generated skill path. The generated Pi package descriptor declares skills, not a Cursor plugin installation. |
+| `~/.cursor/plugins/`, `.cursor-plugin/plugin.json` | Use the caller's absolute generated skill path. The generated Pi package descriptor declares skills, not a Cursor plugin installation. For the upstream agent's missing-path fallback, locate this installed Pi package's `skills/pstack-poteto-mode/SKILL.md`; use its package.json version if several installed copies exist. Do not search Cursor caches. If the package cannot be identified, return the missing path to the caller. |
 | `.cursor/rules/`, always-applied rules | Use the current host's supported instructions. Do not assume Pi reads `.mdc`. Read the separate model table explicitly. |
 | `agent-transcripts`, `~/.cursor/projects/` | Use only the identified Pi session and approved workspace scope below. |
 | Upstream GitHub links to packaged files | Read the local generated copy first. Give the user a URL only when a link is needed. |

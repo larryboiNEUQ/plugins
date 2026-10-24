@@ -29,14 +29,24 @@ const PI_NOTICE =
 const PI_README_NOTE =
   "This is a generated local Pi package. Install it with `pi install git:github.com/larryboiNEUQ/plugins` " +
   "or `pi install /path/to/plugins` for a local checkout, which registers its skills and, with Tintinweb, its agents. " +
-  "Older skill links or agent files with the same names take precedence and must be removed first. " +
-  "Personal model and subscription examples are not installed automatically.";
-const PI_EXAMPLE_NOTE =
-  "This is an optional snapshot of the reference installation, not a Pi default or a live availability or quota check. " +
-  "Generation does not apply it. Existing user configuration takes precedence.";
+  "All package skills use the pstack- prefix. Start with `/skill:pstack-poteto-mode`; model setup is " +
+  "`/skill:pstack-setup-pstack`. Personal model mappings stay in ~/.pi/agent/pstack/models.md and are changed only " +
+  "by an approved setup. Updating the package does not remove older unprefixed pstack resources.";
 const PI_AGENT_NOTE =
-  "Before judging, read the caller-supplied absolute poteto-mode SKILL.md and the Pi mapping at ../../docs/harness/pi.md " +
-  "relative to that skill directory. If the path is missing, report it before following Cursor-specific instructions.";
+  "In Pi, read the caller-supplied absolute pstack-poteto-mode SKILL.md and the Pi adapter at ../../docs/harness/pi.md " +
+  "relative to that skill directory before following this agent. The adapter overrides Cursor-specific instructions, " +
+  "names, and paths below. If no skill path was supplied, locate skills/pstack-poteto-mode/SKILL.md in this installed " +
+  "Pi package rather than a Cursor cache. If the package cannot be identified, report the missing path before working.";
+const UPSTREAM_POTETO = `---
+name: poteto-agent
+description: Upstream delegate.
+role: reviewer
+---
+
+# Poteto Agent
+
+Work scoped tasks on .cursor/projects/agent-transcripts and try grok-9.9-fast when told.
+`;
 
 const temps = [];
 process.once("exit", () => {
@@ -82,6 +92,7 @@ const PI_ADAPTER = `# pstack in Pi
 
 | Cursor instruction | Pi |
 | \`Task\` | \`Agent\` |
+| grok- | mapped model |
 | todolist | checklist |
 | generalPurpose | subagent_type |
 | comment-sicko | subagent_type: "comment-sicko" |
@@ -112,15 +123,10 @@ function fixture(options = {}) {
   put(root, "pstack/docs/guide/01-start.md", "# Start\n\nRun [alpha](../../skills/alpha/SKILL.md) and see [README](../../README.md).\n");
   put(root, "pstack/docs/harness/claude-code.md", CC_ADAPTER);
   put(root, "pstack/docs/harness/pi.md", options.piAdapter ?? PI_ADAPTER);
-  put(root, "pstack/docs/harness/pi/agents/poteto-agent.md",
-    "---\nname: poteto-agent\ndescription: Scoped delegate.\nextensions: true\nskills: true\nprompt_mode: replace\n---\n\nDo the scoped task.\n");
   put(root, "pstack/docs/harness/pi/agents/pstack-readonly.md",
     "---\nname: pstack-readonly\ndescription: Read-only delegate.\nextensions: false\nskills: true\nprompt_mode: replace\n---\n\nRead only.\n");
-  put(root, "pstack/docs/harness/pi/roles.json", JSON.stringify({ roles: [{ name: "fixture role" }] }, null, 2) + "\n");
-  put(root, "pstack/docs/harness/pi/examples/current-installation/models.md", "# Example models\n\nfixture-model: xhigh\n");
-  put(root, "pstack/docs/harness/pi/examples/current-installation/subscriptions.md", "# Example subscriptions\n\nfixture plan\n");
   put(root, "pstack/agents/comment-sicko.md", COMMENT_SICKO);
-  put(root, "pstack/agents/poteto-agent.md", "---\nname: poteto-agent\ndescription: Upstream delegate.\n---\n\nUpstream body.\n");
+  put(root, "pstack/agents/poteto-agent.md", UPSTREAM_POTETO);
   put(root, "pstack/automations/nightly.md", "# Nightly automation\n");
 
   put(root, "pstack/skills/alpha/SKILL.md", `---
@@ -213,12 +219,12 @@ test("pi tree has expected paths, renamed skills, exclusions, and relocated link
   generateOrFail(root);
 
   const skills = readdirSync(join(root, "harness/pi/pstack/skills")).sort();
-  assert.ok(skills.includes("alpha"));
+  assert.ok(skills.includes("pstack-alpha"));
   assert.ok(skills.includes("pstack-tdd"));
   assert.ok(skills.includes("pstack-teach"));
-  assert.ok(skills.includes("deslop"));
-  assert.ok(skills.includes("control-cli"));
-  assert.ok(skills.includes("control-ui"));
+  assert.ok(skills.includes("pstack-deslop"));
+  assert.ok(skills.includes("pstack-control-cli"));
+  assert.ok(skills.includes("pstack-control-ui"));
   assert.ok(!skills.includes("tdd"), "bare tdd must not be emitted");
   assert.ok(!skills.includes("teach"), "bare teach must not be emitted");
   assert.ok(!skills.includes("make-bot-ui"), "excluded skill must not be emitted");
@@ -230,10 +236,10 @@ test("pi tree has expected paths, renamed skills, exclusions, and relocated link
   const teach = read(root, "harness/pi/pstack/skills/pstack-teach/SKILL.md");
   assert.match(teach, /^name: pstack-teach$/m);
 
-  const alpha = read(root, "harness/pi/pstack/skills/alpha/SKILL.md");
+  const alpha = read(root, "harness/pi/pstack/skills/pstack-alpha/SKILL.md");
   assert.ok(alpha.includes("../pstack-tdd/SKILL.md"), "tdd link must relocate");
   assert.ok(!alpha.includes("../tdd/SKILL.md"), "old tdd link must not remain");
-  assert.ok(alpha.includes("../../agents/comment-sicko.md"), "local agent link stays local");
+  assert.ok(alpha.includes("../../agents/pstack-comment-sicko.md"), "local agent link stays local");
   assert.ok(alpha.includes("https://github.com/cursor/plugins/blob/main/pstack/automations/nightly.md"),
     "excluded file link must fall back to GitHub");
   assert.ok(alpha.includes("https://github.com/cursor/plugins/blob/main/pstack/skills/make-bot-ui/SKILL.md"),
@@ -246,35 +252,38 @@ test("kit skills, licenses, agent files, config, and package.json are emitted", 
 
   assert.equal(read(root, "harness/pi/pstack/LICENSE"), "MIT fixture license\n");
   assert.equal(read(root, "harness/pi/pstack/LICENSE-cursor-team-kit"), "MIT kit license\n");
-  assert.equal(read(root, "harness/pi/pstack/skills/control-ui/renderer.js"), "export const fixture = true;\n");
-  const controlUi = read(root, "harness/pi/pstack/skills/control-ui/SKILL.md");
-  assert.ok(controlUi.includes("../control-cli/SKILL.md"), "kit-internal link stays local");
+  assert.equal(read(root, "harness/pi/pstack/skills/pstack-control-ui/renderer.js"), "export const fixture = true;\n");
+  const controlUi = read(root, "harness/pi/pstack/skills/pstack-control-ui/SKILL.md");
+  assert.ok(controlUi.includes("../pstack-control-cli/SKILL.md"), "kit-internal link stays local");
 
-  assert.equal(
-    read(root, "harness/pi/pstack/agents/poteto-agent.md"),
-    read(root, "pstack/docs/harness/pi/agents/poteto-agent.md"),
-    "lead-authored agent must be verbatim",
-  );
+  const sicko = read(root, "harness/pi/pstack/agents/pstack-comment-sicko.md");
+  const sickoUpstream = read(root, "pstack/agents/comment-sicko.md").replace(/^---\n[\s\S]*?\n---\n*/, "");
+  assert.ok(sicko.startsWith("---\nname: pstack-comment-sicko\n"));
+  assert.ok(sicko.includes("extensions: true"));
+  assert.ok(sicko.includes("skills: true"));
+  assert.ok(sicko.includes("allowed_subagents: pstack-readonly, pstack-poteto-agent"));
+  assert.ok(sicko.includes("prompt_mode: replace"));
+  assert.ok(sicko.includes("description: A deranged comment-hater that savors deletion."));
+  assert.equal(sicko.split(`${PI_AGENT_NOTE}\n\n`)[1], sickoUpstream, "agent body must equal upstream bytes");
+  assert.ok(!/^readonly:/m.test(sicko.split("---")[1] ?? ""), "Cursor readonly field must not survive");
+  assert.ok(!/is_background/.test(sicko.split("---")[1] ?? ""));
+
+  const poteto = read(root, "harness/pi/pstack/agents/pstack-poteto-agent.md");
+  const potetoUpstream = read(root, "pstack/agents/poteto-agent.md").replace(/^---\n[\s\S]*?\n---\n*/, "");
+  assert.ok(poteto.startsWith("---\nname: pstack-poteto-agent\n"));
+  assert.ok(poteto.includes("allowed_subagents: pstack-poteto-agent, pstack-readonly, pstack-comment-sicko"));
+  assert.ok(poteto.includes("description: Upstream delegate."));
+  assert.equal(poteto.split(`${PI_AGENT_NOTE}\n\n`)[1], potetoUpstream, "agent body must equal upstream bytes");
+  assert.ok(poteto.includes(".cursor/projects/agent-transcripts"), "upstream Cursor path prose survives");
+  assert.ok(poteto.includes("grok-9.9-fast"), "upstream model slug prose survives");
+
   assert.equal(
     read(root, "harness/pi/pstack/agents/pstack-readonly.md"),
     read(root, "pstack/docs/harness/pi/agents/pstack-readonly.md"),
   );
 
-  const sicko = read(root, "harness/pi/pstack/agents/comment-sicko.md");
-  assert.ok(sicko.includes("extensions: true"));
-  assert.ok(sicko.includes("skills: true"));
-  assert.ok(sicko.includes("allowed_subagents: pstack-readonly, poteto-agent"));
-  assert.ok(sicko.includes("prompt_mode: replace"));
-  assert.ok(sicko.includes("description: A deranged comment-hater that savors deletion."));
-  assert.ok(sicko.includes(PI_AGENT_NOTE));
-  assert.ok(sicko.indexOf(PI_AGENT_NOTE) < sicko.indexOf("# Comment Sicko"));
-  assert.ok(sicko.includes("My first output when spawned is exactly this."));
-  assert.ok(!/^readonly:/m.test(sicko.split("---")[1] ?? ""), "Cursor readonly field must not survive");
-
-  assert.equal(read(root, "harness/pi/pstack/config/roles.json"), read(root, "pstack/docs/harness/pi/roles.json"));
-  const models = read(root, "harness/pi/pstack/config/examples/current-installation/models.md");
-  assert.ok(models.startsWith(PI_EXAMPLE_NOTE));
-  assert.ok(models.includes("fixture-model: xhigh"));
+  assert.ok(!existsSync(join(root, "harness/pi/pstack/config")),
+    "no config catalog or example snapshots may be emitted");
 
   const pkg = JSON.parse(read(root, "harness/pi/pstack/package.json"));
   assert.equal(pkg.name, "pstack-pi-harness");
@@ -286,7 +295,7 @@ test("kit skills, licenses, agent files, config, and package.json are emitted", 
     "package.json must not declare an installable runner");
   assert.deepEqual(
     readdirSync(join(root, "harness/pi/pstack/agents")).sort(),
-    ["comment-sicko.md", "poteto-agent.md", "pstack-readonly.md"],
+    ["pstack-comment-sicko.md", "pstack-poteto-agent.md", "pstack-readonly.md"],
     "the Pi agents dir must hold exactly the three agent definitions",
   );
   const rootPkg = JSON.parse(readFileSync(join(REPO, "package.json"), "utf8"));
@@ -305,8 +314,8 @@ test("kit skills, licenses, agent files, config, and package.json are emitted", 
   assert.ok(readme.includes(PI_README_NOTE));
   const guide = read(root, "harness/pi/pstack/docs/guide/01-start.md");
   assert.ok(guide.includes("[the Pi adapter](../harness/pi.md)"));
-  assert.ok(guide.includes("[alpha](../../skills/alpha/SKILL.md)"), "guide link stays local and relative");
-  assert.ok(read(root, "harness/pi/pstack/skills/alpha/SKILL.md").includes(PI_NOTICE));
+  assert.ok(guide.includes("[alpha](../../skills/pstack-alpha/SKILL.md)"), "guide link stays local and relative");
+  assert.ok(read(root, "harness/pi/pstack/skills/pstack-alpha/SKILL.md").includes(PI_NOTICE));
 });
 
 test("every generated Pi SKILL.md carries the mapping notice", () => {
@@ -329,7 +338,7 @@ test("no generated agent carries a model or thinking pin", () => {
 test("default run emits the tree and --check passes; fixture prose survives", () => {
   const root = fixture();
   generateOrFail(root);
-  assert.ok(existsSync(join(root, "harness/pi/pstack/skills/alpha/SKILL.md")));
+  assert.ok(existsSync(join(root, "harness/pi/pstack/skills/pstack-alpha/SKILL.md")));
   const check = generate(root, ["--check"]);
   assert.equal(check.status, 0, `--check: ${check.stdout}${check.stderr}`);
   const piTdd = read(root, "harness/pi/pstack/skills/pstack-tdd/SKILL.md");
@@ -345,7 +354,7 @@ ${PI_NOTICE}
 
 Fixture tdd body.
 `, "renamed skill must be frontmatter rename plus notice plus verbatim body");
-  const betaRun = join(root, "harness/pi/pstack/skills/beta/scripts/run.sh");
+  const betaRun = join(root, "harness/pi/pstack/skills/pstack-beta/scripts/run.sh");
   assert.ok((statSync(betaRun).mode & 0o111) !== 0, "executable bit must be preserved");
 });
 
@@ -365,20 +374,20 @@ test("source trees are unmodified and regeneration is stable", () => {
 test("--check fails after a Pi corruption or addition and writes nothing", () => {
   const root = fixture();
   generateOrFail(root);
-  const victim = join(root, "harness/pi/pstack/skills/alpha/SKILL.md");
-  const before = read(root, "harness/pi/pstack/skills/alpha/SKILL.md");
+  const victim = join(root, "harness/pi/pstack/skills/pstack-alpha/SKILL.md");
+  const before = read(root, "harness/pi/pstack/skills/pstack-alpha/SKILL.md");
   writeFileSync(victim, "corrupted\n");
   const run = generate(root, ["--check"]);
   assert.notEqual(run.status, 0, "--check must fail on a corrupted Pi file");
-  assert.equal(read(root, "harness/pi/pstack/skills/alpha/SKILL.md"), "corrupted\n",
+  assert.equal(read(root, "harness/pi/pstack/skills/pstack-alpha/SKILL.md"), "corrupted\n",
     "--check must not rewrite files");
 
   writeFileSync(victim, before);
   generateOrFail(root);
-  put(root, "harness/pi/pstack/skills/alpha/extra.txt", "stray\n");
+  put(root, "harness/pi/pstack/skills/pstack-alpha/extra.txt", "stray\n");
   const stray = generate(root, ["--check"]);
   assert.notEqual(stray.status, 0, "--check must fail on an added Pi file");
-  assert.ok(existsSync(join(root, "harness/pi/pstack/skills/alpha/extra.txt")));
+  assert.ok(existsSync(join(root, "harness/pi/pstack/skills/pstack-alpha/extra.txt")));
 });
 
 test("Pi TERMS cover every upstream generator term key", () => {
@@ -394,13 +403,15 @@ test("Pi TERMS cover every upstream generator term key", () => {
 test("Pi generation leaves harness/pstack byte-identical and upstream --check passes", () => {
   const root = fixture();
   generateOrFail(root);
-  const before = sha(join(REPO, "harness/pstack"));
-  const run = spawnSync(process.execPath, [join(REPO, "scripts", "generate-pi-harness.mjs")], { encoding: "utf8" });
-  assert.equal(run.status, 0, run.stderr);
-  const after = sha(join(REPO, "harness/pstack"));
+  cpSync(join(REPO, "scripts", "generate-pstack-harness-trees.mjs"), join(root, "scripts", "generate-pstack-harness-trees.mjs"));
+  const upstream = spawnSync(process.execPath, [join(root, "scripts", "generate-pstack-harness-trees.mjs")], { cwd: root, encoding: "utf8" });
+  assert.equal(upstream.status, 0, `upstream generation: ${upstream.stdout}${upstream.stderr}`);
+  const before = sha(join(root, "harness/pstack"));
+  generateOrFail(root);
+  const after = sha(join(root, "harness/pstack"));
   assert.deepEqual([...after.entries()].sort(), [...before.entries()].sort());
-  const upstream = spawnSync(process.execPath, [join(REPO, "scripts", "generate-pstack-harness-trees.mjs"), "--check"], { cwd: REPO, encoding: "utf8" });
-  assert.equal(upstream.status, 0, `upstream --check: ${upstream.stdout}${upstream.stderr}`);
+  const check = spawnSync(process.execPath, [join(root, "scripts", "generate-pstack-harness-trees.mjs"), "--check"], { cwd: root, encoding: "utf8" });
+  assert.equal(check.status, 0, `upstream --check: ${check.stdout}${check.stderr}`);
 });
 
 test("upstream generation in a temp copy does not touch harness/pi/pstack", () => {
@@ -447,9 +458,9 @@ test("invalid source skill metadata fails before touching generated trees", () =
 test("skill without a heading still gets the notice with body intact", () => {
   const root = fixture();
   generateOrFail(root);
-  const emitted = read(root, "harness/pi/pstack/skills/gamma/SKILL.md");
+  const emitted = read(root, "harness/pi/pstack/skills/pstack-gamma/SKILL.md");
   assert.equal(emitted, `---
-name: gamma
+name: pstack-gamma
 description: Fixture gamma without a heading.
 ---
 
@@ -478,14 +489,36 @@ See [missing](references/missing.md).
     "prior generated trees must remain unchanged");
 });
 
-test("a canonical skill colliding with a renamed emitted name fails before writes", () => {
+test("an upstream name already prefixed emits with a second prefix", () => {
+  const root = fixture();
+  put(root, "pstack/skills/pstack-tdd/SKILL.md", "---\nname: pstack-tdd\ndescription: Already prefixed.\n---\n\n# Prefixed\n\nBody.\n");
+  const run = generate(root);
+  assert.equal(run.status, 0, `prefixed source must emit distinctly: ${run.stdout}${run.stderr}`);
+  assert.ok(read(root, "harness/pi/pstack/skills/pstack-pstack-tdd/SKILL.md").includes("name: pstack-pstack-tdd"));
+});
+
+test("an emitted name over 64 characters fails before writes", () => {
   const root = fixture();
   generateOrFail(root);
   const before = sha(join(root, "harness"));
-  put(root, "pstack/skills/pstack-tdd/SKILL.md", "---\nname: pstack-tdd\ndescription: Canonical collider.\n---\n\n# Other\n\nBody.\n");
+  const long = "a" + "-b".repeat(31);
+  put(root, `pstack/skills/${long}/SKILL.md`, `---\nname: ${long}\ndescription: Too long.\n---\n\n# Long\n\nBody.\n`);
   const run = generate(root);
-  assert.notEqual(run.status, 0, "emitted-name collision must fail");
+  assert.notEqual(run.status, 0, "emitted name over 64 chars must fail");
   assert.deepEqual([...sha(join(root, "harness")).entries()].sort(), [...before.entries()].sort());
+});
+
+test("upstream agent body edits flow through without touching Pi sources", () => {
+  const root = fixture();
+  put(root, "pstack/skills/setup-pstack/SKILL.md", "---\nname: setup-pstack\ndescription: Fixture setup.\n---\n\n# Setup\n\nfuture reviewer: grok-9.9-xhigh-fast\n");
+  generateOrFail(root);
+  assert.ok(read(root, "harness/pi/pstack/skills/pstack-setup-pstack/SKILL.md").includes("future reviewer: grok-9.9-xhigh-fast"),
+    "future role prose survives prefixing unchanged");
+  put(root, "pstack/agents/poteto-agent.md", UPSTREAM_POTETO.replace("try grok-9.9-fast", "try opus-4.4-ultra"));
+  const run = generate(root);
+  assert.equal(run.status, 0);
+  assert.ok(read(root, "harness/pi/pstack/agents/pstack-poteto-agent.md").includes("opus-4.4-ultra"),
+    "edited upstream body must appear in generated agent");
 });
 
 test("a canonical skill colliding with a bundled kit skill fails before writes", () => {

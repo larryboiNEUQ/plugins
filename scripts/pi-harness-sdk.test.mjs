@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
+import { createRequire } from "node:module";
 import {
   mkdirSync,
   mkdtempSync,
@@ -24,6 +25,8 @@ assert.ok(
     "for example /path/to/node_modules/@earendil-works/pi-coding-agent/dist/index.js",
 );
 const pi = await import(pathToFileURL(SDK_PATH).href);
+const sdkRequire = createRequire(SDK_PATH);
+const piTui = await import(pathToFileURL(sdkRequire.resolve("@earendil-works/pi-tui")).href);
 
 const temps = [];
 const temp = (prefix) => {
@@ -43,7 +46,7 @@ const isUnder = (child, root) => {
 
 const external = temp("pi-harness-external-");
 const externalSkills = join(external, "skills");
-for (const name of ["tdd", "teach"]) {
+for (const name of ["tdd", "teach", "poteto-mode", "how", "control-cli", "deslop"]) {
   const dir = join(externalSkills, name);
   mkdirSync(dir, { recursive: true });
   writeFileSync(
@@ -62,6 +65,16 @@ const { skills, diagnostics } = pi.loadSkills({
   skillPaths: [GENERATED_SKILLS, externalSkills],
   includeDefaults: false,
 });
+
+const emitted = readdirSync(GENERATED_SKILLS)
+  .filter((name) => {
+    try {
+      return readdirSync(join(GENERATED_SKILLS, name)).includes("SKILL.md");
+    } catch {
+      return false;
+    }
+  })
+  .sort();
 
 const modelRuntime = await pi.ModelRuntime.create({
   authPath: join(fixture, "auth.json"),
@@ -92,38 +105,19 @@ test("loader reports no generated errors or collisions", () => {
   assert.deepEqual(bad, [], `diagnostics for generated skills: ${JSON.stringify(bad, null, 2)}`);
 });
 
-test("the loaded generated skill-name set equals the emitted SKILL.md set", () => {
-  const emitted = readdirSync(GENERATED_SKILLS)
-    .filter((name) => {
-      try {
-        return readdirSync(join(GENERATED_SKILLS, name)).includes("SKILL.md");
-      } catch {
-        return false;
-      }
-    })
-    .sort();
+test("the loaded generated skill-name set equals the emitted pstack- set", () => {
   const loaded = skills
     .filter((s) => isUnder(s.baseDir, GENERATED_SKILLS))
     .map((s) => s.name)
     .sort();
   assert.deepEqual(loaded, emitted);
-  for (const name of ["tdd", "teach"]) {
+  assert.ok(emitted.every((n) => n.startsWith("pstack-")), "every emitted name is prefixed");
+  for (const name of ["tdd", "teach", "poteto-mode", "how", "control-cli", "deslop"]) {
     const found = skills.filter((s) => s.name === name);
     assert.equal(found.length, 1, `${name} must resolve exactly once`);
     assert.ok(
       isUnder(found[0].baseDir, externalSkills),
       `external ${name} must resolve to the fixture, got ${found[0].baseDir}`,
-    );
-  }
-});
-
-test("generated and external skills resolve to their real paths", () => {
-  for (const name of ["poteto-mode", "pstack-tdd", "pstack-teach", "deslop", "control-cli", "control-ui"]) {
-    const found = skills.filter((s) => s.name === name);
-    assert.equal(found.length, 1, `${name} must resolve exactly once`);
-    assert.ok(
-      isUnder(found[0].baseDir, GENERATED_SKILLS),
-      `${name} must resolve inside the generated package, got ${found[0].baseDir}`,
     );
   }
 });
@@ -151,22 +145,22 @@ async function expandSkill(name, arg) {
   }
 }
 
-test("/skill:poteto-mode expands with generated identity, body, and argument", async () => {
+test("/skill:pstack-poteto-mode expands with identity, body, and argument", async () => {
   const arg = "literal-probe";
-  const { expanded, skill } = await expandSkill("poteto-mode", arg);
-  assert.equal(realpathSync(skill.filePath), realpathSync(join(GENERATED_SKILLS, "poteto-mode", "SKILL.md")));
-  assert.match(expanded, /^<skill name="poteto-mode" location="[^"]+">/);
-  assert.ok(expanded.includes(`References are relative to ${skill.baseDir}.`), "missing baseDir note");
+  const { expanded, skill } = await expandSkill("pstack-poteto-mode", arg);
+  assert.equal(realpathSync(skill.filePath), realpathSync(join(GENERATED_SKILLS, "pstack-poteto-mode", "SKILL.md")));
+  assert.match(expanded, /^<skill name="pstack-poteto-mode" location="[^"]+">/);
   assert.ok(
     expanded.includes("In Pi, read [the Pi adapter](../../docs/harness/pi.md) before following this skill."),
     "expanded body lost the Pi adapter notice",
   );
   assert.ok(expanded.includes("## Playbooks"), "expanded body lost the playbook section");
-  assert.ok(expanded.endsWith(arg), "literal argument must trail the expansion");
-  assert.ok(!expanded.includes("/skill:poteto-mode"), "literal /skill: command must be expanded");
+  assert.ok(expanded.includes(`References are relative to ${skill.baseDir}.`));
+  assert.ok(expanded.endsWith(arg));
+  assert.ok(!expanded.includes("/skill:pstack-poteto-mode"), "literal /skill: command must be expanded");
 });
 
-test("/skill:pstack-tdd expands with generated identity, body, and argument", async () => {
+test("/skill:pstack-tdd expands with identity, body, and argument", async () => {
   const arg = "literal-probe";
   const { expanded, skill } = await expandSkill("pstack-tdd", arg);
   assert.equal(realpathSync(skill.filePath), realpathSync(join(GENERATED_SKILLS, "pstack-tdd", "SKILL.md")));
@@ -175,7 +169,31 @@ test("/skill:pstack-tdd expands with generated identity, body, and argument", as
   assert.ok(expanded.includes("# TDD Bug Fix"), "expanded body lost the TDD heading");
   assert.ok(expanded.includes("## Workflow"), "expanded body lost the TDD workflow section");
   assert.ok(expanded.endsWith(arg));
-  assert.ok(!expanded.includes("/skill:pstack-tdd"));
+  assert.ok(!expanded.includes("/skill:pstack-tdd"), "literal /skill: command must be expanded");
+});
+
+test("/skill:pstack-teach expands with identity, body, and argument", async () => {
+  const arg = "literal-probe";
+  const { expanded, skill } = await expandSkill("pstack-teach", arg);
+  assert.equal(realpathSync(skill.filePath), realpathSync(join(GENERATED_SKILLS, "pstack-teach", "SKILL.md")));
+  assert.match(expanded, /^<skill name="pstack-teach" location="[^"]+">/);
+  assert.ok(expanded.includes("# Teach"), "expanded body lost the Teach heading");
+  assert.ok(expanded.includes("Teach sits on top of"), "expanded body lost the Teach body");
+  assert.ok(expanded.endsWith(arg));
+  assert.ok(!expanded.includes("/skill:pstack-teach"), "literal /skill: command must be expanded");
+});
+
+test("/skill:pstack-setup-pstack expands with identity, body, and argument", async () => {
+  const arg = "literal-probe";
+  const { expanded, skill } = await expandSkill("pstack-setup-pstack", arg);
+  assert.equal(realpathSync(skill.filePath), realpathSync(join(GENERATED_SKILLS, "pstack-setup-pstack", "SKILL.md")));
+  assert.match(expanded, /^<skill name="pstack-setup-pstack" location="[^"]+">/);
+  assert.ok(expanded.includes(`References are relative to ${skill.baseDir}.`));
+  assert.ok(expanded.includes("# Setup pstack"), "expanded body lost the Setup heading");
+  assert.ok(expanded.includes("### 1. Detect available models"), "expanded body lost the models section");
+  assert.ok(expanded.includes("In Pi, read [the Pi adapter](../../docs/harness/pi.md)"), "expanded body lost the Pi notice");
+  assert.ok(expanded.endsWith(arg));
+  assert.ok(!expanded.includes("/skill:pstack-setup-pstack"), "literal /skill: command must be expanded");
 });
 
 test("the repository root resolves as a Pi package through settings packages", async () => {
@@ -183,25 +201,21 @@ test("the repository root resolves as a Pi package through settings packages", a
   const previousHome = process.env.HOME;
   process.env.HOME = pkgFixture;
   try {
-    const settingsManager = pi.SettingsManager.inMemory();
-    settingsManager.setPackages([REPO]);
+    const pkgSettings = pi.SettingsManager.inMemory();
+    pkgSettings.setPackages([REPO]);
     const loader = new pi.DefaultResourceLoader({
       cwd: pkgFixture,
       agentDir: join(pkgFixture, "agent"),
-      settingsManager,
+      settingsManager: pkgSettings,
       noExtensions: true,
     });
     await loader.reload();
-    const { skills, diagnostics } = loader.getSkills();
-    assert.deepEqual(diagnostics.filter((d) => d.type === "collision"), []);
-    const emitted = readdirSync(GENERATED_SKILLS)
-      .filter((name) => {
-        try { return readdirSync(join(GENERATED_SKILLS, name)).includes("SKILL.md"); } catch { return false; }
-      })
-      .sort();
-    assert.deepEqual(skills.map((s) => s.name).sort(), emitted);
-    assert.ok(skills.every((s) => isUnder(s.baseDir, GENERATED_SKILLS)), "every skill loads from harness/pi/pstack/skills");
-    const poteto = skills.find((s) => s.name === "poteto-mode");
+    const { skills: pkgSkills, diagnostics: pkgDiagnostics } = loader.getSkills();
+    assert.deepEqual(pkgDiagnostics.filter((d) => d.type === "collision"), []);
+    assert.deepEqual(pkgSkills.map((s) => s.name).sort(), emitted);
+    assert.ok(pkgSkills.every((s) => isUnder(s.baseDir, GENERATED_SKILLS)), "every skill loads from harness/pi/pstack/skills");
+    const poteto = pkgSkills.find((s) => s.name === "pstack-poteto-mode");
+    assert.ok(poteto, "pstack-poteto-mode must load from the package");
     const { createReadToolDefinition } = await import(
       pathToFileURL(join(dirname(SDK_PATH), "core/tools/read.js")).href
     );
@@ -218,14 +232,39 @@ test("the repository root resolves as a Pi package through settings packages", a
   }
 });
 
-test("/skill:pstack-teach expands with generated identity, body, and argument", async () => {
-  const arg = "literal-probe";
-  const { expanded, skill } = await expandSkill("pstack-teach", arg);
-  assert.equal(realpathSync(skill.filePath), realpathSync(join(GENERATED_SKILLS, "pstack-teach", "SKILL.md")));
-  assert.match(expanded, /^<skill name="pstack-teach" location="[^"]+">/);
-  assert.ok(expanded.includes(`References are relative to ${skill.baseDir}.`));
-  assert.ok(expanded.includes("# Teach"), "expanded body lost the Teach heading");
-  assert.ok(expanded.includes("Teach sits on top of"), "expanded body lost the Teach body");
-  assert.ok(expanded.endsWith(arg));
-  assert.ok(!expanded.includes("/skill:pstack-teach"));
+test("the real read tool resolves the Pi adapter from a prefixed skill", async () => {
+  const poteto = skills.find((s) => s.name === "pstack-poteto-mode");
+  assert.ok(poteto);
+  const { createReadToolDefinition } = await import(
+    pathToFileURL(join(dirname(SDK_PATH), "core/tools/read.js")).href
+  );
+  const readTool = createReadToolDefinition(fixture);
+  const res = await readTool.execute("mapping-read", {
+    path: `${poteto.baseDir}/../../docs/harness/pi.md`,
+    offset: 1,
+    limit: 8,
+  });
+  const text = typeof res === "string" ? res : (res?.content?.map?.((c) => c.text ?? "").join("") ?? JSON.stringify(res));
+  assert.ok(text.includes("# pstack in Pi"), `mapping read failed: ${text.slice(0, 300)}`);
+});
+
+test("original-name completion offers the prefixed /skill: commands", async () => {
+  const provider = new piTui.CombinedAutocompleteProvider(
+    emitted.map((n) => ({ name: `skill:${n}`, description: "package skill" })),
+    fixture,
+  );
+  for (const [query, want] of [
+    ["/poteto", "skill:pstack-poteto-mode"],
+    ["/setup-pstack", "skill:pstack-setup-pstack"],
+    ["/tdd", "skill:pstack-tdd"],
+  ]) {
+    const suggestions = await provider.getSuggestions([query], 0, query.length, {});
+    const items = suggestions?.items ?? [];
+    const item = items.find((i) => (i.value ?? i.name) === want);
+    assert.ok(item, `query ${query} must offer ${want}: ${JSON.stringify(items).slice(0, 400)}`);
+    assert.ok(items.every((i) => !String(i.value ?? i.name).startsWith("skill:") || String(i.value ?? i.name).startsWith("skill:pstack-")),
+      `query ${query} must not offer an unprefixed alias`);
+    const applied = provider.applyCompletion([query], 0, query.length, item, suggestions.prefix);
+    assert.equal(applied.lines[0], `/${want} `, `applied completion must insert the slash form`);
+  }
 });
