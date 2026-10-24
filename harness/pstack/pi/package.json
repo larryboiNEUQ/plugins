@@ -1,0 +1,16 @@
+{
+  "name": "pstack-pi-harness",
+  "private": true,
+  "type": "module",
+  "version": "0.15.32",
+  "pi": {
+    "skills": [
+      "./skills"
+    ],
+    "subagents": {
+      "agents": [
+        "./agents"
+      ]
+    }
+  }
+}

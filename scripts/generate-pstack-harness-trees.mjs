@@ -7,10 +7,9 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PSTACK = join(ROOT, "pstack");
 const SKILLS = join(PSTACK, "skills");
+const KIT = join(ROOT, "cursor-team-kit");
 // Outside pstack/ so Cursor, which copies the whole plugin folder, does not install this tree too.
 const OUT = join(ROOT, "harness", "pstack");
-const TREE = "claude-code";
-const ADAPTER = "docs/harness/claude-code.md";
 const GUIDE = "docs/guide";
 const MANIFESTS = ["plugin.json", ".claude-plugin/plugin.json"];
 const COMMAND = "node scripts/generate-pstack-harness-trees.mjs";
@@ -18,9 +17,9 @@ const GITHUB = "https://github.com/cursor/plugins";
 const LINK = /\]\(([^)\s]+)\)/g;
 const README = `# pstack harness tree
 
-This folder is generated from \`pstack/skills\`, \`pstack/agents\`, \`pstack/${GUIDE}\`, \`pstack/${ADAPTER}\`, \`pstack/README.md\`, \`pstack/LICENSE\`, and \`pstack/plugin.json\`. Do not edit it by hand.
+This folder is generated from \`pstack/skills\`, \`pstack/agents\`, \`pstack/${GUIDE}\`, \`pstack/docs/harness\`, \`pstack/README.md\`, \`pstack/LICENSE\`, \`pstack/plugin.json\`, and \`cursor-team-kit\`. Do not edit it by hand.
 
-Cursor uses \`pstack/\` directly, and Claude Code installs \`${TREE}/\`. The tree leaves out the rest of \`pstack/\`, such as \`pstack/automations\` and \`pstack/assets\`. A relative link to a pstack file that the tree leaves out points at that file on GitHub \`main\` instead.
+Cursor uses \`pstack/\` directly, Claude Code installs \`claude-code/\`, and Pi loads \`pi/\` through the repository root \`package.json\`. The trees leave out the rest of \`pstack/\`, such as \`pstack/automations\` and \`pstack/assets\`. A relative link to a source file that a tree leaves out points at that file on GitHub \`main\` instead.
 
 After editing those sources, run \`${COMMAND}\` from the repository root and commit the result.
 `;
@@ -52,6 +51,21 @@ const TERMS = [
 const ROUTE_KEY = "Run another pstack skill";
 const SKILL_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+const PI_NOTICE = (href) =>
+  `In Pi, read [the Pi adapter](${href}) before following this skill. ` +
+  "It maps Cursor names to Pi and records extension requirements and local policies.";
+const PI_README_NOTE =
+  "This is a generated local Pi package. Install it with `pi install git:github.com/larryboiNEUQ/plugins` " +
+  "or `pi install /path/to/plugins` for a local checkout, which registers its skills and, with Tintinweb, its agents. " +
+  "Older skill links or agent files with the same names take precedence and must be removed first. " +
+  "Personal model and subscription examples are not installed automatically.";
+const PI_EXAMPLE_NOTE =
+  "This is an optional snapshot of the reference installation, not a Pi default or a live availability or quota check. " +
+  "Generation does not apply it. Existing user configuration takes precedence.";
+const PI_AGENT_NOTE =
+  "Before judging, read the caller-supplied absolute poteto-mode SKILL.md and the Pi mapping at ../../docs/harness/pi.md " +
+  "relative to that skill directory. If the path is missing, report it before following Cursor-specific instructions.";
+
 function walk(dir) {
   return readdirSync(dir).flatMap((name) => {
     if (name === ".DS_Store" || name === "node_modules") return [];
@@ -66,10 +80,10 @@ function file(path) {
 
 const skills = readdirSync(SKILLS).filter((name) => existsSync(join(SKILLS, name, "SKILL.md")));
 
-function classify(skill) {
-  const dir = join(SKILLS, skill);
-  const others = skills.filter((name) => name !== skill).join("|");
-  const route = new RegExp(`the \\*\\*(?<bold>${others})\\*\\* skill|\`/(?<command>${others})\``, "g");
+function classify(skill, root = SKILLS, others = skills) {
+  const dir = join(root, skill);
+  const rest = others.filter((name) => name !== skill).join("|");
+  const route = new RegExp(`the \\*\\*(?<bold>${rest})\\*\\* skill|\`/(?<command>${rest})\``, "g");
   const linksToSkill = (line, name) => line.includes(`(../${name}/`);
   const namesBareSkill = (line) =>
     [...line.matchAll(route)].some(({ groups }) => !linksToSkill(line, groups.bold ?? groups.command));
@@ -85,84 +99,285 @@ function classify(skill) {
 }
 
 const classes = new Map(skills.map((skill) => [skill, classify(skill)]));
+
+const CLAUDE_LINE =
+  `In Claude Code, read [the Claude Code adapter](../../docs/harness/claude-code.md) once per session ` +
+  "before you follow this skill. It maps the Cursor names in pstack skills to Claude Code.";
+
+const PI_RENAME = new Map([["tdd", "pstack-tdd"], ["teach", "pstack-teach"]]);
+const PI_AGENT_SOURCES = [
+  ["poteto-agent.md", "pstack/docs/harness/pi/agents/poteto-agent.md"],
+  ["pstack-readonly.md", "pstack/docs/harness/pi/agents/pstack-readonly.md"],
+];
+
+function insertAfterH1(text, paragraph) {
+  if (/^# /m.test(text)) return text.replace(/^(# .*)\n+/m, `$1\n\n${paragraph}\n\n`);
+  if (text.startsWith("---\n")) return text.replace(/^(---\n[\s\S]*?\n---)\n*/, `$1\n\n${paragraph}\n\n`);
+  return `${paragraph}\n\n${text}`;
+}
+
+function piCommentSicko() {
+  const text = readFileSync(join(PSTACK, "agents", "comment-sicko.md"), "utf8");
+  const description = text.match(/^description:(.*)$/m)?.[1].trim() ?? "";
+  const body = text.replace(/^---\n[\s\S]*?\n---\n*/, "");
+  const frontmatter =
+    "---\nname: comment-sicko\n" +
+    `description: ${description}\n` +
+    "extensions: true\nskills: true\nallowed_subagents: pstack-readonly, poteto-agent\nprompt_mode: replace\n---";
+  return `${frontmatter}\n\n${body.replace(/^(# .*)/m, `${PI_AGENT_NOTE}\n\n$1`)}`;
+}
+
+const TARGETS = [
+  {
+    name: "claude-code",
+    label: "Claude Code",
+    adapter: "docs/harness/claude-code.md",
+    rename: new Map(),
+    exclude: new Set(),
+    kitSkills: [],
+    agents: () =>
+      walk(join(PSTACK, "agents")).map((path) => [
+        `agents/${relative(join(PSTACK, "agents"), path)}`,
+        relative(ROOT, path),
+      ]),
+    skillNotice: (skill) => (classes.get(skill).wrap ? CLAUDE_LINE : null),
+    docNotice: () => null,
+    manifests: true,
+    packageJson: null,
+    extras: () => [],
+  },
+  {
+    name: "pi",
+    label: "Pi",
+    adapter: "docs/harness/pi.md",
+    rename: PI_RENAME,
+    exclude: new Set(["make-bot-ui"]),
+    kitSkills: ["control-cli", "control-ui", "deslop"],
+    agents: () => [
+      ...PI_AGENT_SOURCES.map(([emitted, src]) => [`agents/${emitted}`, src]),
+      ["agents/comment-sicko.md", "pstack/agents/comment-sicko.md", { bytes: Buffer.from(piCommentSicko()), executable: false }],
+    ],
+    skillNotice: (skill, emitted) => PI_NOTICE(posix.relative(posix.dirname(emitted), "docs/harness/pi.md")),
+    docNotice: (emitted) => {
+      const notice = PI_NOTICE(posix.relative(posix.dirname(emitted), "docs/harness/pi.md"));
+      return emitted === "README.md" ? `${notice}\n\n${PI_README_NOTE}` : notice;
+    },
+    manifests: false,
+    packageJson: () => {
+      const plugin = JSON.parse(readFileSync(join(PSTACK, "plugin.json"), "utf8"));
+      return JSON.stringify(
+        {
+          name: "pstack-pi-harness",
+          private: true,
+          type: "module",
+          version: plugin.version,
+          pi: { skills: ["./skills"], subagents: { agents: ["./agents"] } },
+        },
+        null,
+        2,
+      ) + "\n";
+    },
+    extras: () => [
+      ["LICENSE-cursor-team-kit", "cursor-team-kit/LICENSE"],
+      ["config/roles.json", "pstack/docs/harness/pi/roles.json"],
+      [
+        "config/examples/current-installation/models.md",
+        "pstack/docs/harness/pi/examples/current-installation/models.md",
+        (entry) => {
+          entry.bytes = Buffer.from(`${PI_EXAMPLE_NOTE}\n\n${entry.bytes.toString("utf8")}`);
+        },
+      ],
+      [
+        "config/examples/current-installation/subscriptions.md",
+        "pstack/docs/harness/pi/examples/current-installation/subscriptions.md",
+        (entry) => {
+          entry.bytes = Buffer.from(`${PI_EXAMPLE_NOTE}\n\n${entry.bytes.toString("utf8")}`);
+        },
+      ],
+    ],
+  },
+];
+
 const problems = [];
-const users = new Map();
 for (const [skill, { usesCursorNames, wrap }] of classes) {
   if (usesCursorNames.size > 0 && !wrap) problems.push(`skills/${skill}/SKILL.md uses Cursor names but has no H1`);
-  for (const key of usesCursorNames) users.set(key, [...(users.get(key) ?? []), skill]);
   // Cursor runs a skill by its folder name and Claude Code lists it by its frontmatter `name`, so the two must match. The Agent Skills spec limits both to SKILL_NAME.
   const frontmatter = readFileSync(join(SKILLS, skill, "SKILL.md"), "utf8").match(/^---\n([\s\S]*?)\n---/)?.[1] ?? "";
   const name = frontmatter.match(/^name:(.*)$/m)?.[1].trim().replace(/^(["'])(.*)\1$/, "$2");
   if (name !== skill) problems.push(`skills/${skill}/SKILL.md has name ${JSON.stringify(name ?? "")}, not its folder name ${skill}`);
   if (!SKILL_NAME.test(skill) || skill.length > 64) problems.push(`skills/${skill} is not lowercase words joined by hyphens, at most 64 characters`);
 }
-const adapter = readFileSync(join(PSTACK, ADAPTER), "utf8");
-for (const [key, using] of users) {
-  if (!adapter.includes(key)) problems.push(`Claude Code adapter has no row for ${key}, used by ${using.join(", ")}`);
+const kitSkills = [...new Set(TARGETS.flatMap((target) => target.kitSkills))];
+const kitClasses = new Map(
+  kitSkills.map((skill) => [skill, classify(skill, join(KIT, "skills"), [...skills, ...kitSkills])]),
+);
+for (const [skill, { usesCursorNames, wrap }] of kitClasses) {
+  const label = `cursor-team-kit/skills/${skill}`;
+  if (usesCursorNames.size > 0 && !wrap) problems.push(`${label}/SKILL.md uses Cursor names but has no H1`);
+  const frontmatter = readFileSync(join(KIT, "skills", skill, "SKILL.md"), "utf8").match(/^---\n([\s\S]*?)\n---/)?.[1] ?? "";
+  const name = frontmatter.match(/^name:(.*)$/m)?.[1].trim().replace(/^(["'])(.*)\1$/, "$2");
+  if (name !== skill) problems.push(`${label}/SKILL.md has name ${JSON.stringify(name ?? "")}, not its folder name ${skill}`);
+  if (!SKILL_NAME.test(skill) || skill.length > 64) problems.push(`${label} is not lowercase words joined by hyphens, at most 64 characters`);
+}
+const adapters = new Map(TARGETS.map((target) => [target.name, readFileSync(join(PSTACK, target.adapter), "utf8")]));
+for (const target of TARGETS) {
+  const adapter = adapters.get(target.name);
+  const users = new Map();
+  for (const [skill, { usesCursorNames }] of classes) {
+    if (target.exclude.has(skill)) continue;
+    for (const key of usesCursorNames) users.set(key, [...(users.get(key) ?? []), skill]);
+  }
+  for (const [skill, { usesCursorNames }] of kitClasses) {
+    if (!target.kitSkills.includes(skill)) continue;
+    for (const key of usesCursorNames) users.set(key, [...(users.get(key) ?? []), `cursor-team-kit/${skill}`]);
+  }
+  for (const [key, using] of users) {
+    if (!adapter.includes(key)) {
+      problems.push(`${target.label} adapter has no row for ${key}, used by ${using.join(", ")}`);
+    }
+  }
 }
 for (const problem of problems) console.log(`FAIL ${problem}`);
 if (problems.length > 0) process.exit(1);
 
-// The pstack-relative path that a relative link in `from` points at, if that path exists.
+// The repo-relative path that a relative link in `from` points at, if that path exists.
 function resolve(from, href) {
   const target = href.replace(/[#?].*/, "");
   if (!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) return undefined;
   const path = posix.join(posix.dirname(from), target).replace(/\/$/, "");
-  return existsSync(join(PSTACK, path)) ? path : undefined;
+  return existsSync(join(ROOT, path)) ? path : undefined;
 }
 
 function has(files, path) {
   return files.has(path) || [...files.keys()].some((key) => key.startsWith(`${path}/`));
 }
 
-function render() {
-  // Skills read the adapter, the guide, and the README at runtime, so Claude Code never fetches them.
-  const copies = [
-    ...walk(SKILLS),
-    ...walk(join(PSTACK, "agents")),
-    ...walk(join(PSTACK, GUIDE)),
-    join(PSTACK, ADAPTER),
-    join(PSTACK, "README.md"),
-  ];
-  const files = new Map(copies.map((path) => [relative(PSTACK, path), file(path)]));
-  const line =
-    `In Claude Code, read [the Claude Code adapter](../../${ADAPTER}) once per session before you follow this skill. ` +
-    "It maps the Cursor names in pstack skills to Claude Code.";
-  for (const [skill, { wrap }] of classes) {
-    const path = `skills/${skill}/SKILL.md`;
-    const text = files.get(path).bytes.toString("utf8");
-    if (wrap) files.get(path).bytes = Buffer.from(text.replace(/^(# .*)\n+/m, `$1\n\n${line}\n\n`));
+// Skills read the adapter, the guide, and the README at runtime, so generated hosts never fetch them.
+const errors = [];
+function render(target) {
+  const files = new Map();
+  const placed = new Map();
+  const put = (emitted, src, override) => {
+    if (files.has(emitted) && files.get(emitted).src !== src) {
+      errors.push(`${target.name}/${emitted} is emitted by both ${files.get(emitted).src} and ${src}`);
+      return;
+    }
+    const entry = { ...file(join(ROOT, src)), src };
+    if (typeof override === "function") override(entry);
+    else if (override) Object.assign(entry, override);
+    files.set(emitted, entry);
+    let [s, e] = [src, emitted];
+    placed.set(s, e);
+    while (posix.dirname(s) !== "." && posix.dirname(e) !== ".") {
+      [s, e] = [posix.dirname(s), posix.dirname(e)];
+      placed.set(s, e);
+    }
+  };
+
+  for (const skill of skills) {
+    if (target.exclude.has(skill)) continue;
+    const renamed = target.rename.get(skill) ?? skill;
+    for (const path of walk(join(SKILLS, skill))) {
+      put(`skills/${renamed}/${relative(join(SKILLS, skill), path)}`, relative(ROOT, path));
+    }
   }
-  files.set("LICENSE", file(join(PSTACK, "LICENSE")));
-  for (const manifest of MANIFESTS) files.set(manifest, file(join(PSTACK, "plugin.json")));
-  for (const [path, entry] of files) {
-    if (!path.endsWith(".md")) continue;
-    const text = entry.bytes.toString("utf8").replace(LINK, (link, href) => {
-      const target = resolve(path, href);
-      if (!target || target.split("/")[0] === ".." || has(files, target)) return link;
-      const kind = statSync(join(PSTACK, target)).isDirectory() ? "tree" : "blob";
-      return `](${GITHUB}/${kind}/main/pstack/${target}${href.slice(href.search(/[#?]|$/))})`;
-    });
-    entry.bytes = Buffer.from(text);
+  for (const name of target.kitSkills) {
+    for (const path of walk(join(KIT, "skills", name))) {
+      put(`skills/${name}/${relative(join(KIT, "skills", name), path)}`, relative(ROOT, path));
+    }
+  }
+  for (const [emitted, src, override] of target.agents()) put(emitted, src, override);
+  for (const path of walk(join(PSTACK, GUIDE))) {
+    put(`${GUIDE}/${relative(join(PSTACK, GUIDE), path)}`, relative(ROOT, path));
+  }
+  put(target.adapter, `pstack/${target.adapter}`);
+  put("README.md", "pstack/README.md");
+  put("LICENSE", "pstack/LICENSE");
+  for (const [emitted, src, override] of target.extras()) put(emitted, src, override);
+  if (target.manifests) for (const manifest of MANIFESTS) put(manifest, "pstack/plugin.json");
+  if (target.packageJson) put("package.json", "pstack/plugin.json", { bytes: Buffer.from(target.packageJson()), executable: false });
+
+  for (const [, emitted] of target.rename) {
+    const path = `skills/${emitted}/SKILL.md`;
+    const entry = files.get(path);
+    entry.bytes = Buffer.from(
+      entry.bytes.toString("utf8").replace(/^---\n[\s\S]*?\n---/, (frontmatter) =>
+        frontmatter.replace(/^name:.*$/m, `name: ${emitted}`),
+      ),
+    );
+  }
+  for (const skill of skills) {
+    if (target.exclude.has(skill)) continue;
+    const emitted = `skills/${target.rename.get(skill) ?? skill}/SKILL.md`;
+    const notice = target.skillNotice(skill, emitted);
+    if (notice) {
+      const entry = files.get(emitted);
+      entry.bytes = Buffer.from(insertAfterH1(entry.bytes.toString("utf8"), notice));
+    }
+  }
+  for (const name of target.kitSkills) {
+    const emitted = `skills/${name}/SKILL.md`;
+    const notice = target.skillNotice(name, emitted);
+    if (notice) {
+      const entry = files.get(emitted);
+      entry.bytes = Buffer.from(insertAfterH1(entry.bytes.toString("utf8"), notice));
+    }
+  }
+  for (const emitted of ["README.md", ...[...files.keys()].filter((key) => key.startsWith(`${GUIDE}/`) && key.endsWith(".md"))]) {
+    const notice = target.docNotice(emitted);
+    if (notice) {
+      const entry = files.get(emitted);
+      entry.bytes = Buffer.from(insertAfterH1(entry.bytes.toString("utf8"), notice));
+    }
+  }
+
+  for (const [emitted, entry] of files) {
+    if (!emitted.endsWith(".md") || !entry.src) continue;
+    entry.bytes = Buffer.from(entry.bytes.toString("utf8").replace(LINK, (link, href) => {
+      const source = resolve(entry.src, href);
+      if (!source || source.split("/")[0] === "..") return link;
+      const suffix = href.slice(href.search(/[#?]|$/));
+      const mapped = placed.get(source);
+      if (mapped !== undefined) {
+        const current = posix.join(posix.dirname(emitted), href.replace(/[#?].*/, "")).replace(/\/$/, "");
+        if (current === mapped) return link;
+        return `](${posix.relative(posix.dirname(emitted), mapped)}${suffix})`;
+      }
+      const kind = statSync(join(ROOT, source)).isDirectory() ? "tree" : "blob";
+      return `](${GITHUB}/${kind}/main/${source}${suffix})`;
+    }));
   }
   return files;
 }
 
-// Claude Code installs only the tree, so a relative link that works from pstack/ has to work inside the tree too.
-// Links to pstack files that the tree leaves out already point at GitHub, so a failure here is a link that leaves pstack/.
-const files = render();
-const rendered = new Map([["README.md", { bytes: Buffer.from(README), executable: false }]]);
+// Each tree installs only itself, so a relative link that works from its source has to work inside the tree too.
+// Links to source files that a tree leaves out already point at GitHub, so a failure here is a link that escapes the tree.
+const rendered = new Map([["README.md", { bytes: Buffer.from(README), executable: false, src: null }]]);
 const dangling = [];
-for (const [path, entry] of files) {
-  rendered.set(`${TREE}/${path}`, entry);
-  if (!path.endsWith(".md")) continue;
-  for (const [, href] of entry.bytes.toString("utf8").matchAll(LINK)) {
-    const target = resolve(path, href);
-    if (target && !has(files, target)) dangling.push(`harness/pstack/${TREE}/${path} links to ${href}, which is not in the tree`);
+for (const target of TARGETS) {
+  const files = render(target);
+  for (const [path, entry] of files) {
+    rendered.set(`${target.name}/${path}`, entry);
+    if (!path.endsWith(".md")) continue;
+    for (const [, href] of entry.bytes.toString("utf8").matchAll(LINK)) {
+      const linkPath = href.replace(/[#?].*/, "");
+      if (!linkPath || /^[a-z][a-z0-9+.-]*:/i.test(linkPath)) continue;
+      const resolved = posix.join(posix.dirname(path), linkPath).replace(/\/$/, "");
+      if (resolved.split("/")[0] === "..") {
+        dangling.push(`harness/pstack/${target.name}/${path} links to ${href}, which escapes the tree`);
+      } else if (!has(files, resolved)) {
+        const source = entry.src ? resolve(entry.src, href) : undefined;
+        if (source) {
+          dangling.push(`harness/pstack/${target.name}/${path} links to ${href}, which is not in the tree`);
+        } else if (/[./]/.test(linkPath)) {
+          dangling.push(`harness/pstack/${target.name}/${path} links to ${href}, which does not exist`);
+        }
+      }
+    }
   }
 }
-for (const link of dangling) console.log(`FAIL ${link}`);
-if (dangling.length > 0) process.exit(1);
+for (const problem of [...errors, ...dangling]) console.log(`FAIL ${problem}`);
+if (errors.length + dangling.length > 0) process.exit(1);
 
 if (process.argv.includes("--check")) {
   const onDisk = new Map(existsSync(OUT) ? walk(OUT).map((path) => [relative(OUT, path), file(path)]) : []);

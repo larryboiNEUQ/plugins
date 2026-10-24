@@ -1,0 +1,15 @@
+{
+  "name": "pstack-pi",
+  "private": true,
+  "description": "Pi package entry for the generated pstack harness in harness/pstack/pi.",
+  "pi": {
+    "skills": [
+      "./harness/pstack/pi/skills"
+    ],
+    "subagents": {
+      "agents": [
+        "./harness/pstack/pi/agents"
+      ]
+    }
+  }
+}
