@@ -11,6 +11,7 @@ on:
       - "scripts/pi-sdk/**"
       - "package.json"
       - ".github/workflows/pi-harness.yml"
+      - ".github/workflows/sync-upstream.yml"
   push:
     branches: [main]
     paths:
@@ -22,6 +23,7 @@ on:
       - "scripts/pi-sdk/**"
       - "package.json"
       - ".github/workflows/pi-harness.yml"
+      - ".github/workflows/sync-upstream.yml"
 
 permissions:
   contents: read

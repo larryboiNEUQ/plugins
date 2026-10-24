@@ -1,0 +1,69 @@
+name: sync-upstream
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN || github.token }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Sync upstream main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch https://github.com/cursor/plugins.git main
+          if git merge-base --is-ancestor FETCH_HEAD HEAD; then
+            echo "Already up to date"
+            exit 0
+          fi
+          if ! git merge --no-edit FETCH_HEAD; then
+            git merge --abort
+            exit 1
+          fi
+          UPSTREAM_SHA=$(git rev-parse --short FETCH_HEAD)
+          node scripts/generate-pi-harness.mjs
+          git add -- harness/pi/pstack
+          if ! git diff --cached --quiet -- harness/pi/pstack; then
+            git commit -m "chore(pi): regenerate harness for upstream $UPSTREAM_SHA"
+          fi
+          node scripts/generate-pi-harness.mjs --check
+          node scripts/generate-pstack-harness-trees.mjs --check
+          node --test scripts/generate-pi-harness.test.mjs
+          npm ci --prefix scripts/pi-sdk --ignore-scripts
+          PI_HARNESS_SDK="$GITHUB_WORKSPACE/scripts/pi-sdk/node_modules/@earendil-works/pi-coding-agent/dist/index.js" node --test scripts/pi-harness-sdk.test.mjs
+          git push origin main
+      - name: Report sync failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -e
+          TITLE="Upstream sync failed"
+          BODY="Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          If the upstream merge touches .github/workflows, the default GITHUB_TOKEN cannot push it. Add a SYNC_TOKEN secret (a fine-grained PAT with contents and workflows write on this repo), or run \"Sync fork\" in the GitHub UI and push by hand."
+          EXISTING=$(gh issue list --repo "$GH_REPO" --state open --search "in:title \"$TITLE\"" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --repo "$GH_REPO" --body "$BODY"
+          else
+            gh issue create --repo "$GH_REPO" --title "$TITLE" --body "$BODY"
+          fi
