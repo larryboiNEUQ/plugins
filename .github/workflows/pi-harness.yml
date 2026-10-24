@@ -1,0 +1,40 @@
+name: pi-harness
+
+on:
+  pull_request:
+    paths:
+      - "pstack/**"
+      - "cursor-team-kit/**"
+      - "harness/**"
+      - "scripts/generate-pi-harness*"
+      - "scripts/pi-harness-sdk.test.mjs"
+      - "package.json"
+      - ".github/workflows/pi-harness.yml"
+  push:
+    branches: [main]
+    paths:
+      - "pstack/**"
+      - "cursor-team-kit/**"
+      - "harness/**"
+      - "scripts/generate-pi-harness*"
+      - "scripts/pi-harness-sdk.test.mjs"
+      - "package.json"
+      - ".github/workflows/pi-harness.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/generate-pi-harness.mjs --check
+      - run: node scripts/generate-pstack-harness-trees.mjs --check
+      - run: node --test scripts/generate-pi-harness.test.mjs
+      - run: |
+          npm install --prefix "$RUNNER_TEMP/pi-sdk" --no-save --ignore-scripts @earendil-works/pi-coding-agent@1.1.0
+          PI_HARNESS_SDK="$RUNNER_TEMP/pi-sdk/node_modules/@earendil-works/pi-coding-agent/dist/index.js" node --test scripts/pi-harness-sdk.test.mjs

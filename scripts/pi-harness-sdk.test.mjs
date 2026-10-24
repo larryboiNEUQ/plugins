@@ -15,7 +15,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { test } from "node:test";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
-const GENERATED_SKILLS = join(REPO, "harness", "pstack", "pi", "skills");
+const GENERATED_SKILLS = join(REPO, "harness", "pi", "pstack", "skills");
 
 const SDK_PATH = process.env.PI_HARNESS_SDK;
 assert.ok(
@@ -200,7 +200,7 @@ test("the repository root resolves as a Pi package through settings packages", a
       })
       .sort();
     assert.deepEqual(skills.map((s) => s.name).sort(), emitted);
-    assert.ok(skills.every((s) => isUnder(s.baseDir, GENERATED_SKILLS)), "every skill loads from harness/pstack/pi/skills");
+    assert.ok(skills.every((s) => isUnder(s.baseDir, GENERATED_SKILLS)), "every skill loads from harness/pi/pstack/skills");
     const poteto = skills.find((s) => s.name === "poteto-mode");
     const { createReadToolDefinition } = await import(
       pathToFileURL(join(dirname(SDK_PATH), "core/tools/read.js")).href

@@ -4,7 +4,7 @@ Read this file before following a generated Pi skill. Its Pi instructions overri
 
 This edition targets Pi with the Tintinweb `@tintinweb/pi-subagents` extension. Pi alone does not provide that extension's `Agent` tool. Other subagent extensions are not interchangeable with it.
 
-`<pstack>` is the generated `harness/pstack/pi` directory. The generated skills and guide retain upstream wording. Apply the mappings below rather than treating a Cursor command, path, or model slug as a Pi capability.
+`<pstack>` is the generated `harness/pi/pstack` directory. The Pi tree sits outside `harness/pstack` because the upstream generator owns and rewrites that folder. The generated skills and guide retain upstream wording. Apply the mappings below rather than treating a Cursor command, path, or model slug as a Pi capability.
 
 ## Where the rules come from
 
@@ -22,7 +22,7 @@ The example model table and subscription profile under `config/examples/current-
 
 ## Generate and load
 
-Run `node scripts/generate-pstack-harness-trees.mjs` from the repository root. Run the same command with `--check` to detect stale generated files without writing.
+Run `node scripts/generate-pi-harness.mjs` from the repository root. Run the same command with `--check` to detect stale generated files without writing.
 
 The generated package declares its skills for Pi and its three agents for Tintinweb through `pi.subagents`. Install from the repository root, `pi install git:github.com/larryboiNEUQ/plugins` or `pi install /path/to/plugins` for a local checkout, so the whole generated tree stays together. Tintinweb registers the agents only when the package is installed through Pi settings packages and `packageAgents` allows it. A local agent file with the same name in the Pi agent directory, `.agents/agents/`, or `.pi/agents/` overrides a package agent, and a user or project skill with the same name overrides a package skill, so remove or rename an older copy before relying on this edition, after asking. Linking each generated skill folder on its own breaks the relative mapping path.
 

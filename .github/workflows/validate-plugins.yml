@@ -31,8 +31,5 @@ jobs:
       - name: Check generated pstack harness trees
         run: node scripts/generate-pstack-harness-trees.mjs --check
 
-      - name: Test pstack harness generation
-        run: node --test scripts/generate-pstack-harness-trees.test.mjs
-
       - name: Test pstack skill scripts
         run: node --test pstack/skills/*/scripts/test/*.test.mjs
