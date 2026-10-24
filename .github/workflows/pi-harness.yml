@@ -8,6 +8,7 @@ on:
       - "harness/**"
       - "scripts/generate-pi-harness*"
       - "scripts/pi-harness-sdk.test.mjs"
+      - "scripts/pi-sdk/**"
       - "package.json"
       - ".github/workflows/pi-harness.yml"
   push:
@@ -18,6 +19,7 @@ on:
       - "harness/**"
       - "scripts/generate-pi-harness*"
       - "scripts/pi-harness-sdk.test.mjs"
+      - "scripts/pi-sdk/**"
       - "package.json"
       - ".github/workflows/pi-harness.yml"
 
@@ -36,5 +38,5 @@ jobs:
       - run: node scripts/generate-pstack-harness-trees.mjs --check
       - run: node --test scripts/generate-pi-harness.test.mjs
       - run: |
-          npm install --prefix "$RUNNER_TEMP/pi-sdk" --no-save --ignore-scripts @earendil-works/pi-coding-agent@1.1.0
-          PI_HARNESS_SDK="$RUNNER_TEMP/pi-sdk/node_modules/@earendil-works/pi-coding-agent/dist/index.js" node --test scripts/pi-harness-sdk.test.mjs
+          npm ci --prefix scripts/pi-sdk --ignore-scripts
+          PI_HARNESS_SDK="$GITHUB_WORKSPACE/scripts/pi-sdk/node_modules/@earendil-works/pi-coding-agent/dist/index.js" node --test scripts/pi-harness-sdk.test.mjs
