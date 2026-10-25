@@ -1,0 +1,36 @@
+name: devin-harness
+
+on:
+  pull_request:
+    paths:
+      - "pstack/**"
+      - "cursor-team-kit/**"
+      - "harness/**"
+      - "scripts/generate-devin-harness*"
+      - ".github/workflows/devin-harness.yml"
+      - ".github/workflows/sync-upstream.yml"
+  push:
+    branches: [main]
+    paths:
+      - "pstack/**"
+      - "cursor-team-kit/**"
+      - "harness/**"
+      - "scripts/generate-devin-harness*"
+      - ".github/workflows/devin-harness.yml"
+      - ".github/workflows/sync-upstream.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/generate-devin-harness.mjs --check
+      - run: node scripts/generate-pi-harness.mjs --check
+      - run: node scripts/generate-pstack-harness-trees.mjs --check
+      - run: node --test scripts/generate-devin-harness.test.mjs
