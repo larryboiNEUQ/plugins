@@ -2,6 +2,14 @@
 
 Official Cursor plugins for popular developer tools, frameworks, and SaaS products. Each plugin is a standalone directory at the repository root with its own `.cursor-plugin/plugin.json` manifest.
 
+## Fork harnesses
+
+This fork keeps upstream plugin sources and generates host-specific pstack editions. Pi uses [harness/pi/pstack](harness/pi/pstack/) through the root Pi package. Codex uses [harness/codex/pstack](harness/codex/pstack/) through the separate `larry-plugins-codex` marketplace in [.agents/plugins/marketplace.json](.agents/plugins/marketplace.json).
+
+For Codex, add this fork with `codex plugin marketplace add larryboiNEUQ/plugins`, then install pstack from **Larry's Codex harnesses** using the plugin UI. See the [Codex adapter](pstack/docs/harness/codex.md) for tool mappings, model setup, dynamic reasoning, and unsupported Cursor features. The package does not install personal model choices or replace another pstack edition automatically.
+
+After source changes, run `node scripts/generate-codex-harness.mjs`; use `--check` and `node --test scripts/generate-codex-harness.test.mjs` to verify the output. Each host generator owns a separate tree. The upstream sync workflow regenerates and checks Pi and Codex before pushing.
+
 ## Plugins
 
 | `name` | Plugin | Author | Category | `description` (from marketplace) |

@@ -1,0 +1,40 @@
+name: codex-harness
+
+on:
+  pull_request:
+    paths:
+      - "pstack/**"
+      - "harness/**"
+      - "scripts/generate-codex-harness*"
+      - "scripts/generate-pstack-harness-trees.mjs"
+      - "scripts/generate-pi-harness.mjs"
+      - ".agents/plugins/marketplace.json"
+      - ".github/workflows/codex-harness.yml"
+      - ".github/workflows/sync-upstream.yml"
+  push:
+    branches: [main]
+    paths:
+      - "pstack/**"
+      - "harness/**"
+      - "scripts/generate-codex-harness*"
+      - "scripts/generate-pstack-harness-trees.mjs"
+      - "scripts/generate-pi-harness.mjs"
+      - ".agents/plugins/marketplace.json"
+      - ".github/workflows/codex-harness.yml"
+      - ".github/workflows/sync-upstream.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/generate-codex-harness.mjs --check
+      - run: node --test scripts/generate-codex-harness.test.mjs
+      - run: node scripts/generate-pstack-harness-trees.mjs --check
+      - run: node scripts/generate-pi-harness.mjs --check
