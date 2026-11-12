@@ -40,13 +40,16 @@ jobs:
           fi
           UPSTREAM_SHA=$(git rev-parse --short FETCH_HEAD)
           node scripts/generate-pi-harness.mjs
-          git add -- harness/pi/pstack
-          if ! git diff --cached --quiet -- harness/pi/pstack; then
-            git commit -m "chore(pi): regenerate harness for upstream $UPSTREAM_SHA"
+          node scripts/generate-devin-harness.mjs
+          git add -- harness/pi/pstack harness/devin/pstack
+          if ! git diff --cached --quiet -- harness/pi/pstack harness/devin/pstack; then
+            git commit -m "chore: regenerate harnesses for upstream $UPSTREAM_SHA"
           fi
           node scripts/generate-pi-harness.mjs --check
+          node scripts/generate-devin-harness.mjs --check
           node scripts/generate-pstack-harness-trees.mjs --check
           node --test scripts/generate-pi-harness.test.mjs
+          node --test scripts/generate-devin-harness.test.mjs
           npm ci --prefix scripts/pi-sdk --ignore-scripts
           PI_HARNESS_SDK="$GITHUB_WORKSPACE/scripts/pi-sdk/node_modules/@earendil-works/pi-coding-agent/dist/index.js" node --test scripts/pi-harness-sdk.test.mjs
           git push origin main

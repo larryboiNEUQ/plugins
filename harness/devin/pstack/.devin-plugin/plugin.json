@@ -1,0 +1,11 @@
+{
+  "name": "pstack",
+  "version": "0.15.32",
+  "description": "pstack native Devin CLI edition",
+  "platforms": [
+    "local"
+  ],
+  "skills": [
+    "skills"
+  ]
+}
