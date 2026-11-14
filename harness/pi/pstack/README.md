@@ -2,7 +2,7 @@
 
 In Pi, read [the Pi adapter](docs/harness/pi.md) before following this skill. It maps Cursor names to Pi and records extension requirements and local policies.
 
-This is a generated local Pi package. Install it with `pi install git:github.com/larryboiNEUQ/plugins` or `pi install /path/to/plugins` for a local checkout, which registers its skills and, with Tintinweb, its agents. All package skills use the pstack- prefix. Start with `/skill:pstack-poteto-mode`; model setup is `/skill:pstack-setup-pstack`. Personal model mappings stay in ~/.pi/agent/pstack/models.md and are changed only by an approved setup. Updating the package does not remove older unprefixed pstack resources.
+This is a generated local Pi package. Install it with `pi install git:github.com/larryboiNEUQ/plugins` or `pi install /path/to/plugins` for a local checkout, which registers its skills and, with Tintinweb, its agents. All package skills use the pstack- prefix. Start with `/skill:pstack-poteto-mode`; model setup is `/skill:pstack-setup-pstack`. Personal model mappings stay in `${PI_CODING_AGENT_DIR:-~/.pi/agent}/pstack/models.md` and are changed only by an approved setup. Updating the package does not remove older unprefixed pstack resources.
 
 i'm [poteto](https://x.com/poteto). i'm not a president or ceo, but i've worked with millions of lines of code at Meta, Netflix, and Cursor. i'm also on the react core team where i help build and maintain react compiler.
 

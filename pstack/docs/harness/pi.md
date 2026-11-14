@@ -18,7 +18,7 @@ This edition targets Pi with the Tintinweb `@tintinweb/pi-subagents` extension. 
 | Operating system | Linux measurement commands and possible macOS alternatives. | Check the command on the current machine. A dated observation is not a platform guarantee. |
 | Unsupported Cursor features | Cursor cloud execution, Automations, Benny, make-bot-ui, a built-in PR tool, persistent mode, and timed `/loop` wakes. | Report the unavailable step and any dependent result. Do not simulate success. |
 
-Personal model mappings stay in the user-owned `~/.pi/agent/pstack/models.md`. This package ships no personal model defaults, subscription profile, or copied role catalog. An existing `subscriptions.md` is unused and stays untouched.
+Personal model mappings stay in the user-owned `${PI_CODING_AGENT_DIR:-~/.pi/agent}/pstack/models.md` (`$PI_CODING_AGENT_DIR/pstack/models.md` when `PI_CODING_AGENT_DIR` is set, otherwise `~/.pi/agent/pstack/models.md`). This package ships no personal model defaults, subscription profile, or copied role catalog. An existing `subscriptions.md` beside it is unused and stays untouched.
 
 ## Generate and load
 
@@ -74,7 +74,7 @@ For concurrent writers, use the extension's native `isolation: "worktree"`. Comm
 
 ## Select models and thinking
 
-The Cursor `pstack-models.mdc` rule maps to the user-owned `~/.pi/agent/pstack/models.md`. Read it explicitly before the first role-based delegation. Pi does not automatically apply Cursor `.mdc` rules. These are instructions for the calling agent, not an automatic model-routing extension.
+The Cursor `pstack-models.mdc` rule maps to the user-owned `${PI_CODING_AGENT_DIR:-~/.pi/agent}/pstack/models.md` (`$PI_CODING_AGENT_DIR/pstack/models.md` when `PI_CODING_AGENT_DIR` is set, otherwise `~/.pi/agent/pstack/models.md`). Read only that active file explicitly before the first role-based delegation; do not inspect `~/.pi/agent/pstack/models.md` when `PI_CODING_AGENT_DIR` points elsewhere. Pi does not automatically apply Cursor `.mdc` rules. These are instructions for the calling agent, not an automatic model-routing extension.
 
 The table normally has two lines, `grok: <provider/model>[:<thinking>]` and `opus: <provider/model>[:<thinking>]`. A value may also be `auto` or `inherit-parent`. A family line selects one model. Optional role overrides use `<full upstream role label>: <value>` or a comma-separated list of values. Match the full label before the first colon because role labels themselves can contain commas. Do not split role labels at commas. Split only a recognized final thinking suffix from a model value. Pass `model: "provider/model"` and `thinking: "level"` separately.
 
@@ -106,13 +106,13 @@ This overrides upstream same-family, closest-slug, and Sonnet fallback instructi
 
 Invoke `/skill:pstack-setup-pstack`. This section replaces the original skill's model detection, role-table, budget, and write steps. Keep its applicable optional verification offers. The setup remains an agent workflow, not executable configuration code.
 
-1. Read the existing `~/.pi/agent/pstack/models.md`, if present. Leave `subscriptions.md` and all credentials alone.
+1. Resolve the active Pi agent directory (`$PI_CODING_AGENT_DIR` when non-empty, otherwise `~/.pi/agent`) without dumping unrelated environment variables, and read the existing `<agent-dir>/pstack/models.md`, if present. Leave `<agent-dir>/pstack/subscriptions.md` and all credentials alone.
 2. Run `pi --list-models`. A failed command stops the write. Validate exact provider/model identities from this result, not cached examples or fuzzy names.
 3. Ask which available model maps to Grok and which maps to Opus. Preserve existing family choices on reruns. With no accepted choice, propose `inherit-parent` and explain reduced panel diversity. Do not infer a user's subscriptions from provider names.
 4. Normally propose only the two family lines without thinking suffixes, so upstream retains its role assignments and effort choices. Offer a fixed thinking suffix or role override only when requested. Preserve existing role overrides unless the user approves removing them. For a legacy role-only table, show every row that migration would remove. Read upstream role definitions as needed instead of maintaining a copied list.
 5. Show the current and proposed file, exact model identities, thinking behavior, aliases, unavailable entries, removed rows, and panel diversity. Ask the user to accept, edit, or cancel before writing. A setup invocation or smoke-test request alone does not approve replacement.
 6. Refresh availability before writing. Validate the accepted identities and supported thinking values. Resolve any unsupported `max` explicitly. If a value is unavailable, stop the write and ask for another choice.
-7. Back up the existing model table before replacing it. Stage and reread the approved contents beside the destination, then replace only that table. Write no frontmatter, only optional comments, the two family lines, and approved role overrides. Preserve the backup on failure and report partial state.
+7. Back up the existing `<agent-dir>/pstack/models.md` before replacing it. Stage and reread the approved contents beside that destination, then replace only that table. Write no frontmatter, only optional comments, the two family lines, and approved role overrides. Preserve the backup on failure and report partial state.
 8. Report the written table, backup path, inheritance, thinking overrides, and any reduced panel diversity. Rerunning setup preserves current choices until a replacement is approved.
 
 Setup does not edit Pi settings, authentication, installed extensions, or agent definitions. Agent definitions contain no fixed model or thinking.
@@ -127,9 +127,9 @@ Setup does not edit Pi settings, authentication, installed extensions, or agent 
 | `agent-transcripts`, `~/.cursor/projects/` | Use only the identified Pi session and approved workspace scope below. |
 | Upstream GitHub links to packaged files | Read the local generated copy first. Give the user a URL only when a link is needed. |
 
-Use the explicitly identified current session path first. Pi supports custom agent and session directories, so the default path is not universal.
+Use the explicitly identified current session path first (such as `$PI_SESSION_FILE` when set). Pi supports custom agent and session directories (`PI_CODING_AGENT_DIR` and `PI_CODING_AGENT_SESSION_DIR`), so the default path is not universal.
 
-The default workspace session directory is `~/.pi/agent/sessions/--<encoded-cwd>--/`. Resolve cwd to an absolute path, remove its first slash, replace `/`, `\`, and `:` with `-`, and wrap it in `--`. List files only in that approved workspace directory.
+When neither a session file nor `PI_CODING_AGENT_SESSION_DIR` is set, the default workspace session directory is `<agent-dir>/sessions/--<encoded-cwd>--/`, where `<agent-dir>` is `${PI_CODING_AGENT_DIR:-~/.pi/agent}`. When `PI_CODING_AGENT_SESSION_DIR` is set, workspace sessions live under `$PI_CODING_AGENT_SESSION_DIR/--<encoded-cwd>--/` (or the explicit `--session-dir`). Resolve cwd to an absolute path, remove its first slash, replace `/`, `\`, and `:` with `-`, and wrap it in `--`. List files only in that approved workspace directory.
 
 Read each session header and verify its cwd. Order candidates by modification time, not UUID. The latest file is not proof that it is this conversation. A subagent session is not the parent session.
 
@@ -175,6 +175,6 @@ Generation writes only the generated repository tree. It does not install skills
 
 Preserve the operator's current authorization limits. Reversible local work does not grant permission to alter shared settings, publish, send external messages, delete data, deploy, or merge.
 
-Do not dump environment values or inspect credential files to identify a model or debug a provider. Obtain effective identity from host result records. Do not print tokens, keys, cookies, or authorization headers.
+Do not dump environment values or inspect credential files to identify a model or debug a provider (reading `$PI_CODING_AGENT_DIR`, `$PI_CODING_AGENT_SESSION_DIR`, or `$PI_SESSION_FILE` directly for path resolution is allowed). Obtain effective identity from host result records. Do not print tokens, keys, cookies, or authorization headers.
 
 Offline loading and queued skill expansion prove loading and expansion only. They do not prove Tintinweb calls, effective models, worktree isolation, browser operation, panel independence, or autonomous continuation. Record remote CI as not run unless its actual result is available.
