@@ -23,7 +23,7 @@
 - 先给结论，再列要点；每条一两行，写清文件路径和函数/符号名即可。
 - 不贴大段代码，不复述刚读过的内容，少写背景与总结废话。
 - 常规问题控制在 1,500 字以内；用户要求详细说明时再展开。
-- 回答内容和风格使用 /bro（用大白话、少技术黑话，连贯简短，像人对人说话）。
+- 回答风格（大白话 / /bro）：Stop using jargon and speak coherently. State it more simply and concisely, like one human talking to another.
 
 ## 5. 收尾
 - 找到答案直接收尾，不为了过度确认多翻无关文件。
