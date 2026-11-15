@@ -737,6 +737,11 @@
       "name": "runta",
       "source": "third_party/runta",
       "description": "Create and run persistent agent runtimes, publish ports, and manage egress, checkpoints, and images in Runta."
+    },
+    {
+      "name": "fast-io-lite",
+      "source": "fast-io-lite",
+      "description": "Reduce agent round-trips, batch parallel file reads, and keep answers concise without desktop command-whitelist constraints."
     }
   ]
 }
