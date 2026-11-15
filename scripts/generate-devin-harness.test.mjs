@@ -625,3 +625,12 @@ test("other generators do not touch the Devin tree", () => {
   assert.deepEqual([...sha(join(root, "harness/devin")).entries()].sort(), [...before.entries()].sort(),
     "Devin tree must be untouched by other generators");
 });
+
+test("generated Devin adapter honors DEVIN_PSTACK_CONFIG_DIR and documents profile discovery", () => {
+  const adapter = readFileSync(join(REPO, "harness/devin/pstack/docs/harness/devin-cli.md"), "utf8");
+  assert.match(adapter, /\$\{DEVIN_PSTACK_CONFIG_DIR:-~\/\.config\/devin\}\/pstack\/models\.md/);
+  assert.match(adapter, /\$DEVIN_PSTACK_CONFIG_DIR\/pstack\/models\.md/);
+  assert.match(adapter, /XDG_CONFIG_HOME/);
+  assert.match(adapter, /\.devin\/agents\//);
+  assert.match(adapter, /--config/);
+});

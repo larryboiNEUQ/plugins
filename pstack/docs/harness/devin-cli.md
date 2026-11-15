@@ -55,7 +55,9 @@ Personal profiles do not enable nested spawning. Return nested work to the root 
 
 ## Select the two models
 
-The Cursor `pstack-models.mdc` rule maps to the user-owned `~/.config/devin/pstack/models.md`. On Windows use the corresponding Devin user config directory under `%APPDATA%`. A customized config location needs explicit path resolution before writing.
+The Cursor `pstack-models.mdc` rule maps to the user-owned `${DEVIN_PSTACK_CONFIG_DIR:-~/.config/devin}/pstack/models.md` (`$DEVIN_PSTACK_CONFIG_DIR/pstack/models.md` when `DEVIN_PSTACK_CONFIG_DIR` is non-empty, otherwise `${XDG_CONFIG_HOME:-~/.config}/devin/pstack/models.md`, or the corresponding `%APPDATA%` Devin config directory on Windows). Read only that active file before routed delegation; do not read or overwrite `~/.config/devin/pstack/models.md` when `DEVIN_PSTACK_CONFIG_DIR` or `XDG_CONFIG_HOME` points elsewhere.
+
+Devin CLI discovers custom subagent profiles in user config `${XDG_CONFIG_HOME:-~/.config}/devin/agents/*.md` and workspace `.devin/agents/*.md` (plus `.cognition/agents/` and `.agents/agents/`). `--config <path>` overrides `config.json` only and does not redirect `agents/` discovery; `DEVIN_PSTACK_CONFIG_DIR` is a pstack adapter setting and is not read by `devin` itself. Avoid defining duplicate profile names in both user `agents/` and workspace `.devin/agents/`.
 
 The file has two lines:
 
@@ -93,9 +95,9 @@ Report effective model metadata when the host exposes it. If it is absent, say u
 
 This replaces upstream model detection, role-table, reasoning-budget, and write steps. Keep applicable optional verification-skill offers. Setup is an agent workflow, as in the CC and Pi adapters.
 
-1. Read the existing user-owned model table and the four profiles, if present. Leave subscription files, authentication, the selected Fusion model, and the global default subagent model untouched.
+1. Resolve the active pstack config directory `<config-dir>` (`$DEVIN_PSTACK_CONFIG_DIR` when non-empty, otherwise `${XDG_CONFIG_HOME:-~/.config}/devin`, or the Devin `%APPDATA%` directory on Windows) without dumping unrelated environment variables. Read the existing `<config-dir>/pstack/models.md` and the four profiles under `<config-dir>/agents/` (or workspace `.devin/agents/` if explicitly configured there), if present. Leave subscription files, authentication, the selected Fusion model, and the global default subagent model untouched.
 2. Run `devin models list --format json`. Ask which exact UID maps to Grok and which maps to Opus. Explain the effort in each UID. Existing choices remain current until a replacement is approved.
-3. Propose the complete two-line table and the four profile files under `~/.config/devin/agents/`. Their names and filenames match the table above. A full-tool profile has only name, description, and model frontmatter. A read-only profile additionally has `allowed-tools: [read, grep, glob]`. Include no `max-nesting`, hooks, or permission grants.
+3. Propose the complete two-line table at `<config-dir>/pstack/models.md` and the four profile files under `<config-dir>/agents/` (or workspace `.devin/agents/` when workspace-scoped). Their names and filenames match the table above. A full-tool profile has only name, description, and model frontmatter. A read-only profile additionally has `allowed-tools: [read, grep, glob]`. Include no `max-nesting`, hooks, or permission grants. If `DEVIN_PSTACK_CONFIG_DIR` differs from `${XDG_CONFIG_HOME:-~/.config}/devin`, disclose that `devin` loads user profiles from `${XDG_CONFIG_HOME:-~/.config}/devin/agents/` and workspace `.devin/agents/`, not an arbitrary `DEVIN_PSTACK_CONFIG_DIR/agents/`.
 4. Use the body from `<pstack>/docs/harness/devin-cli/profile-body.md` verbatim in all four files. The description identifies its family and whether it is read-only. Every profile's model is exactly its family's accepted UID. Keep upstream prompts out of these files.
 5. Show every changed or removed row/file, both effective model variants, profile tool access, and panel diversity. Ask to accept, edit, or cancel. Invocation of setup alone is not approval to overwrite existing files. Equal model selections reduce independence and must be disclosed.
 6. Refresh the model list before writing. Reject unavailable UIDs, unresolved aliases, and conflicting existing profile names. Back up every existing destination before replacement. Stage and reread accepted contents, then replace only the approved table and profiles.
@@ -114,4 +116,4 @@ This replaces upstream model detection, role-table, reasoning-budget, and write 
 
 OS-specific measurement commands remain capability checks, not guaranteed replacements. Read-only profiles cannot run shell history commands; the root gathers approved git history and diffs before delegation. Optional browser or visual skills are used only when actually installed and authorized.
 
-Generation and offline checks do not call models, modify personal settings, or establish live behavior. Native plugin registration, explicit-profile routing, read-only enforcement, permission flow, and update behavior each need their own recorded check. Preserve the current authorization scope and never print credentials or environment secrets.
+Generation and offline checks do not call models, modify personal settings, or establish live behavior. Native plugin registration, explicit-profile routing, read-only enforcement, permission flow, and update behavior each need their own recorded check. Preserve the current authorization scope and never print credentials or environment secrets (reading `DEVIN_PSTACK_CONFIG_DIR` and `XDG_CONFIG_HOME` directly for config-path resolution is allowed).
