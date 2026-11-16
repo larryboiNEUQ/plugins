@@ -97,7 +97,6 @@ function file(path) {
   return { bytes: readFileSync(path), executable: (info.mode & 0o111) !== 0 };
 }
 
-// Validate every source and output component before any read or destructive write.
 walk(PSTACK);
 if (safeStat(OUT)) walk(OUT);
 
@@ -194,7 +193,6 @@ for (const [key, using] of users) {
 for (const problem of problems) console.log(`FAIL ${problem}`);
 if (problems.length > 0) process.exit(1);
 
-// The repo-relative path that a relative link in `from` points at, if that path exists.
 function resolve(from, href) {
   const target = href.replace(/[#?].*/, "");
   if (!target || /^[a-z][a-z0-9+.-]*:/i.test(target)) return undefined;
@@ -207,7 +205,6 @@ function has(files, path) {
   return files.has(path) || [...files.keys()].some((key) => key.startsWith(`${path}/`));
 }
 
-// Skills read the adapter, the guide, and the README at runtime, so generated hosts never fetch them.
 const errors = [];
 const files = new Map();
 const placed = new Map();
@@ -291,8 +288,6 @@ for (const [emitted, entry] of files) {
   }));
 }
 
-// The tree installs only itself, so a relative link that works from its source has to work inside the tree too.
-// Links to source files that the tree leaves out already point at GitHub, so a failure here is a link that escapes the tree.
 const rendered = new Map();
 const dangling = [];
 for (const [path, entry] of files) {
@@ -316,8 +311,6 @@ for (const [path, entry] of files) {
 }
 for (const problem of [...errors, ...dangling]) console.log(`FAIL ${problem}`);
 if (errors.length + dangling.length > 0) process.exit(1);
-
-if (safeStat(OUT)) walk(OUT);
 
 if (process.argv.includes("--check")) {
   const onDisk = new Map(existsSync(OUT) ? walk(OUT).map((path) => [relative(OUT, path), file(path)]) : []);
