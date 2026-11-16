@@ -1,0 +1,5 @@
+{
+  "name": "fast-io-lite",
+  "version": "1.0.0",
+  "description": "Reduce agent round-trips, batch parallel file reads, and keep answers concise without desktop command-whitelist constraints."
+}

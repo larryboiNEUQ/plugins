@@ -58,7 +58,7 @@ const PI_README_NOTE =
   "This is a generated local Pi package. Install it with `pi install git:github.com/larryboiNEUQ/plugins` " +
   "or `pi install /path/to/plugins` for a local checkout, which registers its skills and, with Tintinweb, its agents. " +
   "All package skills use the pstack- prefix. Start with `/skill:pstack-poteto-mode`; model setup is " +
-  "`/skill:pstack-setup-pstack`. Personal model mappings stay in ~/.pi/agent/pstack/models.md and are changed only " +
+  "`/skill:pstack-setup-pstack`. Personal model mappings stay in `${PI_CODING_AGENT_DIR:-~/.pi/agent}/pstack/models.md` and are changed only " +
   "by an approved setup. Updating the package does not remove older unprefixed pstack resources.";
 const PI_AGENT_NOTE =
   "In Pi, read the caller-supplied absolute pstack-poteto-mode SKILL.md and the Pi adapter at ../../docs/harness/pi.md " +
