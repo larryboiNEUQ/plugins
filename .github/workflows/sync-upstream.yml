@@ -35,8 +35,34 @@ jobs:
             exit 0
           fi
           if ! git merge --no-edit FETCH_HEAD; then
-            git merge --abort
-            exit 1
+            UNMERGED=$(git diff --name-only --diff-filter=U)
+            if [ "$UNMERGED" != ".cursor-plugin/marketplace.json" ]; then
+              git merge --abort || true
+              exit 1
+            fi
+            BASE=""
+            OURS=""
+            THEIRS=""
+            cleanup_conflict() {
+              rm -f "${BASE:-}" "${OURS:-}" "${THEIRS:-}"
+              if git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then
+                git merge --abort || true
+              fi
+            }
+            trap cleanup_conflict EXIT
+            BASE=$(mktemp)
+            OURS=$(mktemp)
+            THEIRS=$(mktemp)
+            if ! git show :1:.cursor-plugin/marketplace.json > "$BASE" 2>/dev/null; then
+              git show "$(git merge-base HEAD FETCH_HEAD):.cursor-plugin/marketplace.json" > "$BASE"
+            fi
+            git show :2:.cursor-plugin/marketplace.json > "$OURS"
+            git show :3:.cursor-plugin/marketplace.json > "$THEIRS"
+            node scripts/merge-marketplace.mjs "$BASE" "$OURS" "$THEIRS" .cursor-plugin/marketplace.json
+            git add .cursor-plugin/marketplace.json
+            git commit --no-edit
+            trap - EXIT
+            rm -f "$BASE" "$OURS" "$THEIRS"
           fi
           UPSTREAM_SHA=$(git rev-parse --short FETCH_HEAD)
           node scripts/generate-pi-harness.mjs
@@ -56,6 +82,9 @@ jobs:
           node --test scripts/generate-devin-harness.test.mjs
           node scripts/generate-agy-harness.mjs --check
           node --test scripts/generate-agy-harness.test.mjs
+          node --test scripts/merge-marketplace.test.mjs
+          npm install --no-save ajv ajv-formats
+          node scripts/validate-plugins.mjs
           npm ci --prefix scripts/pi-sdk --ignore-scripts
           PI_HARNESS_SDK="$GITHUB_WORKSPACE/scripts/pi-sdk/node_modules/@earendil-works/pi-coding-agent/dist/index.js" node --test scripts/pi-harness-sdk.test.mjs
           git push origin main
