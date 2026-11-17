@@ -2,7 +2,7 @@
   "name": "pstack-pi-harness",
   "private": true,
   "type": "module",
-  "version": "0.15.42",
+  "version": "0.15.43",
   "pi": {
     "skills": [
       "./skills"
