@@ -149,6 +149,7 @@ After source changes, run `node scripts/generate-codex-harness.mjs`; use `--chec
 | `hospitable` | [Hospitable](third_party/hospitable/) | Cursor | Integrations | Manage short-term rental properties, reservations, calendars, guest messages, tasks, payouts, and owner statements in Hospitable. |
 | `close` | [Close](third_party/close/) | Cursor | Integrations | Search and update leads, contacts, opportunities, tasks, and conversations in Close. |
 | `factset` | [FactSet](third_party/factset/) | Cursor | Integrations | Query FactSet fundamentals, prices, estimates, ownership, and company data. |
+| `redo` | [Redo](third_party/redo/) | Cursor | Integrations | Look up orders and customers, create and process returns, work support tickets, review marketing campaigns and automations, manage fulfillment and inventory, and build analytics reports in Redo. |
 Author values match each plugin’s `plugin.json` `author.name` (Cursor lists `plugins@cursor.com` in the manifest).
 
 ## Repository structure
