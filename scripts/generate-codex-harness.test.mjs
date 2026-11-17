@@ -329,3 +329,19 @@ test("validates agent underscore fields and accepts supported quoted keys and mu
   success(root); success(root, "--check");
   assert.ok(read(root, `${TREE}/skills/beta/SKILL.md`).includes('paths:\n  - "**/*.ts"'));
 });
+
+test("accepts model field in agent frontmatter and rejects unmapped agent fields", () => {
+  const root = fixture();
+  const agent = "pstack/agents/poteto-agent.md";
+  put(root, agent, read(root, agent).replace("is_background: true", "is_background: true\nmodel: claude-opus-5-5-xhigh-fast"));
+  success(root);
+  success(root, "--check");
+  const emitted = read(root, `${TREE}/agents/poteto-agent.md`);
+  assert.ok(emitted.startsWith(read(root, agent).split("# ")[0]), "preserves agent frontmatter header");
+  assert.ok(emitted.includes("model: claude-opus-5-5-xhigh-fast"));
+
+  put(root, agent, read(root, agent).replace("model: claude-opus-5-5-xhigh-fast", "unknown_agent_field: true"));
+  const result = generate(root);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout, /unmapped frontmatter field unknown_agent_field/);
+});

@@ -131,6 +131,7 @@ function insertAfterH1(text, paragraph) {
 
 const problems = [];
 const SKILL_FIELDS = new Set(["name", "description", "disable-model-invocation", "icon", "color", "paths"]);
+const AGENT_FIELDS = new Set(["name", "description", "is_background", "model"]);
 function validateHeader(text, label, allowed) {
   const header = text.match(/^---\n([\s\S]*?)\n---(?:\n|$)/)?.[1];
   const fields = new Map();
@@ -180,7 +181,7 @@ for (const [skill, { usesCursorNames, wrap }] of classes) {
   if (!SKILL_NAME.test(skill) || skill.length > 64) problems.push(`skills/${skill} is not lowercase words joined by hyphens, at most 64 characters`);
 }
 for (const path of walk(join(PSTACK, "agents")).filter((path) => path.endsWith(".md"))) {
-  validateHeader(readFileSync(path, "utf8"), relative(PSTACK, path), new Set(["name", "description", "is_background"]));
+  validateHeader(readFileSync(path, "utf8"), relative(PSTACK, path), AGENT_FIELDS);
 }
 const adapter = readFileSync(join(PSTACK, ADAPTER), "utf8");
 const users = new Map();
