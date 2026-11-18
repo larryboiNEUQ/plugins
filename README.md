@@ -150,6 +150,11 @@ After source changes, run `node scripts/generate-codex-harness.mjs`; use `--chec
 | `close` | [Close](third_party/close/) | Cursor | Integrations | Search and update leads, contacts, opportunities, tasks, and conversations in Close. |
 | `factset` | [FactSet](third_party/factset/) | Cursor | Integrations | Query FactSet fundamentals, prices, estimates, ownership, and company data. |
 | `redo` | [Redo](third_party/redo/) | Cursor | Integrations | Look up orders and customers, create and process returns, work support tickets, review marketing campaigns and automations, manage fulfillment and inventory, and build analytics reports in Redo. |
+| `strava` | [Strava](third_party/strava/) | Cursor | Integrations | Connect your Strava account so Grok can read your activities, stats, and athlete profile to answer questions about your training. You'll share your profile and activity data, including private activities. Access is read-only, and you can disconnect anytime from Strava's My Apps settings. |
+| `expensify` | [Expensify](third_party/expensify/) | Cursor | Integrations | Connect your Expensify account so Grok can search your expenses, reports, receipts, and invoices to answer questions about your spending. You'll share the Expensify data your account can already see. Access is read-only, and you can revoke it anytime. |
+| `rillet` | [Rillet](third_party/rillet/) | Cursor | Integrations | Query financial reports and manage customers, invoices, bills, contracts, and vendors in Rillet. |
+| `item` | [Item](third_party/item/) | Cursor | Integrations | Search, create, and update CRM contacts, companies, and custom objects, run saved views, manage lists, notes, and tasks, and ask the Item assistant about your customer data. |
+| `hq` | [HQ](third_party/hq/) | Cursor | Integrations | Read and capture company knowledge, projects, policies, files, and skills, message teammates and bots, and call governed integrations in HQ by Indigo. |
 Author values match each plugin’s `plugin.json` `author.name` (Cursor lists `plugins@cursor.com` in the manifest).
 
 ## Repository structure
