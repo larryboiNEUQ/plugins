@@ -155,6 +155,9 @@ After source changes, run `node scripts/generate-codex-harness.mjs`; use `--chec
 | `rillet` | [Rillet](third_party/rillet/) | Cursor | Integrations | Query financial reports and manage customers, invoices, bills, contracts, and vendors in Rillet. |
 | `item` | [Item](third_party/item/) | Cursor | Integrations | Search, create, and update CRM contacts, companies, and custom objects, run saved views, manage lists, notes, and tasks, and ask the Item assistant about your customer data. |
 | `hq` | [HQ](third_party/hq/) | Cursor | Integrations | Read and capture company knowledge, projects, policies, files, and skills, message teammates and bots, and call governed integrations in HQ by Indigo. |
+| `createos` | [CreateOS](third_party/createos/) | Cursor | Integrations | Deploy and manage projects, environments, deployments, domains, logs, cron jobs, security scans, templates, and sandboxes on NodeOps CreateOS. |
+| `fiscal-ai` | [Fiscal.ai](third_party/fiscal-ai/) | Cursor | Integrations | Pull source-linked financials, filings, ratios, prices, segments, KPIs, ownership, fund letters, and news from Fiscal.ai. |
+| `lmty` | [LMTY](third_party/lmty/) | Cursor | Integrations | Read tracked competitors, competitive intelligence reports, change logs, evidence, social mentions, and market feeds for your products, and browse LMTY's public Markets, event timelines, and company, product, and person profiles. |
 Author values match each plugin’s `plugin.json` `author.name` (Cursor lists `plugins@cursor.com` in the manifest).
 
 ## Repository structure
