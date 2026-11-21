@@ -53,20 +53,22 @@ Background agents cannot ask for new tool approvals. A denial is not permission 
 
 Personal profiles do not enable nested spawning. Return nested work to the root unless a separately approved native `max-nesting` policy exists. There is no native worktree-isolation parameter here. Serialize writers until a scoped worktree procedure has been independently verified.
 
-## Select the two models
+## Select the family models
 
 The Cursor `pstack-models.mdc` rule maps to the user-owned `${DEVIN_PSTACK_CONFIG_DIR:-~/.config/devin}/pstack/models.md` (`$DEVIN_PSTACK_CONFIG_DIR/pstack/models.md` when `DEVIN_PSTACK_CONFIG_DIR` is non-empty, otherwise `${XDG_CONFIG_HOME:-~/.config}/devin/pstack/models.md`, or the corresponding `%APPDATA%` Devin config directory on Windows). Read only that active file before routed delegation; do not read or overwrite `~/.config/devin/pstack/models.md` when `DEVIN_PSTACK_CONFIG_DIR` or `XDG_CONFIG_HOME` points elsewhere.
 
 Devin CLI discovers custom subagent profiles in user config `${XDG_CONFIG_HOME:-~/.config}/devin/agents/*.md` and workspace `.devin/agents/*.md` (plus `.cognition/agents/` and `.agents/agents/`). `--config <path>` overrides `config.json` only and does not redirect `agents/` discovery; `DEVIN_PSTACK_CONFIG_DIR` is a pstack adapter setting and is not read by `devin` itself. Avoid defining duplicate profile names in both user `agents/` and workspace `.devin/agents/`.
 
-The file has two lines:
+The file maps upstream model families (`# defaults: 3`, 9 active roles; legacy `grok:` lines remain honored):
 
 ```text
-grok: <exact Devin model UID>
+# defaults: 3
 opus: <exact Devin model UID>
+fable: <exact Devin model UID>
+gemini: <exact Devin model UID>
 ```
 
-Read upstream role assignments from the current skills or setup-pstack text. Map each `grok-*` default to grok and each `claude-opus-*` default to opus. Preserve panel length and order, including repeated seats. There is no copied role registry.
+Read upstream role assignments from the current skills or setup-pstack text. Map `claude-opus-*` defaults to `opus`, `claude-fable-*` defaults to `fable`, `gemini-*` defaults to `gemini`, and legacy `grok-*` defaults to `grok`. Preserve panel length and order, including repeated seats. There is no copied role registry. Note that `opus` and `fable` share one Claude vendor for Arena's cross-judge requirement.
 
 Devin's model UID includes its reasoning variant. Setup selects the exact variant for each family. That variant is an explicit family-wide effort choice; it does not automatically reproduce every upstream effort suffix. There is no separate per-call model or thinking field on `run_subagent`. Never invent one, or rewrite the configured UID to simulate Cursor's `-fast` choice.
 
@@ -74,8 +76,10 @@ Native profiles materialize the mapping:
 
 | Family | Full tools | Read-only tools |
 | --- | --- | --- |
-| grok | `pstack-grok` | `pstack-grok-readonly` |
 | opus | `pstack-opus` | `pstack-opus-readonly` |
+| fable | `pstack-fable` | `pstack-fable-readonly` |
+| gemini | `pstack-gemini` | `pstack-gemini-readonly` |
+| grok (legacy) | `pstack-grok` | `pstack-grok-readonly` |
 
 Before the first routed call, check that the profile's model matches the accepted table and that it is available in `devin models list --format json`. Missing or inconsistent mappings, unknown families such as an unmapped `gpt-*` or non-Opus `claude-*`, and unavailable models stop routed delegation. Report the gap and offer setup; do not silently use the router, a built-in profile, or the main model.
 
@@ -95,10 +99,10 @@ Report effective model metadata when the host exposes it. If it is absent, say u
 
 This replaces upstream model detection, role-table, reasoning-budget, and write steps. Keep applicable optional verification-skill offers. Setup is an agent workflow, as in the CC and Pi adapters.
 
-1. Resolve the active pstack config directory `<config-dir>` (`$DEVIN_PSTACK_CONFIG_DIR` when non-empty, otherwise `${XDG_CONFIG_HOME:-~/.config}/devin`, or the Devin `%APPDATA%` directory on Windows) without dumping unrelated environment variables. Read the existing `<config-dir>/pstack/models.md` and the four profiles under `<config-dir>/agents/` (or workspace `.devin/agents/` if explicitly configured there), if present. Leave subscription files, authentication, the selected Fusion model, and the global default subagent model untouched.
-2. Run `devin models list --format json`. Ask which exact UID maps to Grok and which maps to Opus. Explain the effort in each UID. Existing choices remain current until a replacement is approved.
-3. Propose the complete two-line table at `<config-dir>/pstack/models.md` and the four profile files under `<config-dir>/agents/` (or workspace `.devin/agents/` when workspace-scoped). Their names and filenames match the table above. A full-tool profile has only name, description, and model frontmatter. A read-only profile additionally has `allowed-tools: [read, grep, glob]`. Include no `max-nesting`, hooks, or permission grants. If `DEVIN_PSTACK_CONFIG_DIR` differs from `${XDG_CONFIG_HOME:-~/.config}/devin`, disclose that `devin` loads user profiles from `${XDG_CONFIG_HOME:-~/.config}/devin/agents/` and workspace `.devin/agents/`, not an arbitrary `DEVIN_PSTACK_CONFIG_DIR/agents/`.
-4. Use the body from `<pstack>/docs/harness/devin-cli/profile-body.md` verbatim in all four files. The description identifies its family and whether it is read-only. Every profile's model is exactly its family's accepted UID. Keep upstream prompts out of these files.
+1. Resolve the active pstack config directory `<config-dir>` (`$DEVIN_PSTACK_CONFIG_DIR` when non-empty, otherwise `${XDG_CONFIG_HOME:-~/.config}/devin`, or the Devin `%APPDATA%` directory on Windows) without dumping unrelated environment variables. Read the existing `<config-dir>/pstack/models.md` and the configured `pstack-*` profiles under `<config-dir>/agents/` (or workspace `.devin/agents/` if explicitly configured there), if present. Leave subscription files, authentication, the selected Fusion model, and the global default subagent model untouched.
+2. Run `devin models list --format json`. Ask which exact UID maps to `opus`, `fable`, and `gemini` (plus `grok` if keeping a legacy mapping). Explain the effort in each UID. Existing choices remain current until a replacement is approved.
+3. Propose `# defaults: 3` and the family table at `<config-dir>/pstack/models.md` plus paired full-tool and read-only profile files under `<config-dir>/agents/` (or workspace `.devin/agents/` when workspace-scoped). Their names and filenames match the table above. A full-tool profile has only name, description, and model frontmatter. A read-only profile additionally has `allowed-tools: [read, grep, glob]`. Include no `max-nesting`, hooks, or permission grants. If `DEVIN_PSTACK_CONFIG_DIR` differs from `${XDG_CONFIG_HOME:-~/.config}/devin`, disclose that `devin` loads user profiles from `${XDG_CONFIG_HOME:-~/.config}/devin/agents/` and workspace `.devin/agents/`, not an arbitrary `DEVIN_PSTACK_CONFIG_DIR/agents/`.
+4. Use the body from `<pstack>/docs/harness/devin-cli/profile-body.md` verbatim in all configured `pstack-*` profile files. The description identifies its family and whether it is read-only. Every profile's model is exactly its family's accepted UID. Keep upstream prompts out of these files.
 5. Show every changed or removed row/file, both effective model variants, profile tool access, and panel diversity. Ask to accept, edit, or cancel. Invocation of setup alone is not approval to overwrite existing files. Equal model selections reduce independence and must be disclosed.
 6. Refresh the model list before writing. Reject unavailable UIDs, unresolved aliases, and conflicting existing profile names. Back up every existing destination before replacement. Stage and reread accepted contents, then replace only the approved table and profiles.
 7. Run `devin doctor --json` to check profile parsing. Report partial writes on failure and preserve backups. Report exactly which files changed and that profile changes require a fresh session. Do not install a plugin or change user config as an incidental setup step.

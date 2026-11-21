@@ -53,12 +53,12 @@ Antigravity separates lightweight subagent spawning from exact-slug multi-model 
 
 The Cursor `pstack-models.mdc` file maps to `${AGY_PSTACK_CONFIG_DIR:-~/.gemini/config/pstack}/models.md`. When `AGY_PSTACK_CONFIG_DIR` is set in the environment, read and write `<AGY_PSTACK_CONFIG_DIR>/models.md`; otherwise use `~/.gemini/config/pstack/models.md`. Read this file explicitly before role-based delegation.
 
-The file uses plain key-value lines (no `.mdc` frontmatter) with a `# budget:` header, optional `grok:` / `opus:` family shorthands, and exact upstream role labels from `setup-pstack`:
+The file uses plain key-value lines (no `.mdc` frontmatter) with `# defaults: 3` and `# budget:` headers, optional `opus:`, `fable:`, `gemini:`, and legacy `grok:` family shorthands, and exact active role labels from `setup-pstack`:
 
-- Resolve an exact role override first (preserving panel list length and seat order). Note that commas inside a role name before the colon (such as `feature, refactoring:` or `reflect judgment, divergent, synthesizer:`) belong to that single role key; split commas only on the right-hand model list.
-- Otherwise resolve upstream `claude-` defaults (`claude-opus-*`) and `grok-` / `gpt-` defaults through any configured `opus:` or `grok:` shorthand, or fall back to `inherit-parent` while disclosing unmapped defaults and any reduced cross-family diversity.
+- Resolve an exact role override first (preserving panel list length and seat order). Note that commas inside a role name before the colon (such as `feature, refactoring:`) belong to that single role key; split commas only on the right-hand model list.
+- Otherwise resolve upstream `claude-opus-*` via `opus:`, `claude-fable-*` via `fable:`, `gemini-*` via `gemini:`, and legacy `grok-` / `gpt-` defaults via `grok:`, or fall back to `inherit-parent` while disclosing unmapped defaults and any reduced cross-vendor diversity (note that `claude-opus-*` and `claude-fable-*` share one Claude vendor for Arena's cross-judge check).
 - `inherit-parent` and `auto` run on the parent model (`Model: "inherit"` in `invoke_subagent`, or omitting `model` in `swarm`).
-- Dynamic effort follows upstream `poteto-mode` (`low < medium < high < xhigh < max`, starting from the chosen budget baseline, stepping up one level for the hardest tasks and down for routine or mechanical work). Match the nearest entitled variant slug exposed by `swarm(action: "models", all: true)` within the same family (for example `gemini-4-hydrogen-xhigh`, `claude-opus-5-5-high`, `claude-sonnet-5-5-medium`, `gpt-oss-120b-medium`), or pass `--effort` when invoking `agy` CLI sessions. Never invent unentitled slugs or `-fast` suffixes.
+- Dynamic effort follows upstream `poteto-mode` (`low < medium < high < xhigh`, capped at `xhigh`; starting from the chosen budget baseline, stepping up one level for the hardest tasks and down for routine or mechanical work). Match the nearest entitled variant slug exposed by `swarm(action: "models", all: true)` within the same family (for example `gemini-4-neon-xhigh`, `gemini-4-neon-high`, `gemini-4-hydrogen-high`, `claude-opus-5-5-high`, `claude-sonnet-5-5-medium`, `gpt-oss-120b-medium`), or pass `--effort` when invoking `agy` CLI sessions. Never invent unentitled slugs or `-fast` suffixes.
 - If a configured slug fails at runtime (quota exhausted or unavailable), preserve the exact error, report the incomplete seat, and ask before substituting another family or falling back to `invoke_subagent` on the parent family.
 
 ## Run setup-pstack
@@ -66,8 +66,8 @@ The file uses plain key-value lines (no `.mdc` frontmatter) with a `# budget:` h
 Follow `/pstack:setup-pstack` with these Antigravity rules:
 
 1. Inspect live entitled models via `swarm(action: "models", all: true)` (preferring it inside an active session; `agy models` is the CLI equivalent). Never read credential files to infer entitlements.
-2. Read `${AGY_PSTACK_CONFIG_DIR:-~/.gemini/config/pstack}/models.md` if it exists, preserving valid role choices and dropping retired roles after listing them.
-3. Offer the four upstream reasoning budgets (`unlimited`, `large`, `medium`, `small`) via `ask_question`, map roles to verified live AGY model slugs (plus `inherit-parent` / `auto`), and show the full proposed table, any effort clamping (for families whose highest variant is `high` or `xhigh`), and cross-family panel diversity.
+2. Read `${AGY_PSTACK_CONFIG_DIR:-~/.gemini/config/pstack}/models.md` if it exists, preserving valid active role choices, replacing stale legacy defaults per `setup-pstack` step 2 when approved, and dropping retired roles after listing them.
+3. Offer the three upstream reasoning budgets (`large`, `medium`, `small`; coercing any legacy `unlimited` to `large`) via `ask_question`, map the 9 active roles (`# defaults: 3`) to verified live AGY model slugs (plus `inherit-parent` / `auto`), and show the full proposed table, any effort clamping (for families whose highest variant is `high`, such as `claude-opus-5-5-high`), and cross-vendor panel diversity.
 4. Wait for explicit operator approval before writing. On cancel, write nothing.
 5. Re-validate every non-alias slug against the live model list before writing. Back up any existing `models.md` to `models.md.bak`, write to a staged temporary file in the same directory, read back to verify non-empty parseable rows, and atomically rename into `models.md`. Never touch `~/.gemini/config/config.json` or `~/.gemini/antigravity-cli/settings.json`.
 
