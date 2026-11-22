@@ -4,7 +4,7 @@
 
 ## 0. 行动门禁：先查后报，明确动手再开 poteto-mode
 - **未明确要求动手前，只查不改**：当用户是在提问、排查原因、看代码、讨论方案，或要求“先看看 / 查查 / 汇报一下”且未明确要求动手修改时，**严禁**调用 `edit_file` / `write_file` 改任何项目文件，也不要运行带写副作用的命令（如 `git commit`、`git push`、改配置、装包）。此时只做只读检索、读文件与只读命令调查，并直接汇报结论与拟改方案。
-- **明确说开始做后，默认启用 `pstack` 的 `/poteto-mode`**：一旦用户明确表示开始修改或实施（例如“开始做”、“动手改”、“直接改”、“修掉它”、“按这个做”），若当前会话尚未加载 `/pstack:poteto-mode`，先用 `read_file` 读取用户配置目录下的 `.gemini/config/plugins/pstack/docs/harness/agy.md` 与 `.gemini/config/plugins/pstack/skills/poteto-mode/SKILL.md`（若项目目录用的是 `.agents/plugins/pstack/` 则读该项目路径；Windows 下注意用真实用户目录绝对路径而非未展开的 `~`），再严格按 `poteto-mode` 及对应 playbook 执行。
+- **获准动手后，每次落实修改都按 `/pstack:poteto-mode` 执行**：一旦用户明确表示开始修改或实施（例如“开始做”、“动手改”、“直接改”、“修掉它”、“按这个做”），包括同一任务中的追加、微调和通过外部工具修改；在动手或发出修改指令前，先针对本次要求选定适用的 playbook 与原则并完成改动前步骤，再按其余步骤执行。首次使用时用 `read_file` 读取用户配置目录下的 `.gemini/config/plugins/pstack/` 下 `docs/harness/agy.md` 与 `skills/poteto-mode/SKILL.md`，按要求读取所选 playbook 与适用原则叶子文件；已读内容可复用，仅在当前上下文丢失执行所需内容时补读对应文件（项目目录用 `.agents/plugins/pstack/`；Windows 用展开后的真实绝对路径）。
 
 ## 1. 用工具验证，按阶段报进度
 - 优先使用现有工具和 skill 去查询、验证并推进任务，拿到真实结果再下结论，不要凭记忆猜测。
