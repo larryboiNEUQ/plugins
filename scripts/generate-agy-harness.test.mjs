@@ -401,7 +401,11 @@ test("real repository generated tree passes --check and agy plugin validate --st
     });
     assert.equal(val.status, 0, `${val.stdout}${val.stderr}`);
     const parsed = JSON.parse(val.stdout);
-    assert.equal(parsed.components.skills, 60);
+    const expectedSkills =
+      readdirSync(join(REPO, "pstack", "skills")).filter(
+        (name) => name !== "make-bot-ui" && existsSync(join(REPO, "pstack", "skills", name, "SKILL.md")),
+      ).length + 3;
+    assert.equal(parsed.components.skills, expectedSkills);
     assert.equal(parsed.components.agents, 2);
     assert.deepEqual(parsed.findings, []);
   }
