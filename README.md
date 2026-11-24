@@ -159,6 +159,9 @@ After source changes, run `node scripts/generate-codex-harness.mjs`; use `--chec
 | `fiscal-ai` | [Fiscal.ai](third_party/fiscal-ai/) | Cursor | Integrations | Pull source-linked financials, filings, ratios, prices, segments, KPIs, ownership, fund letters, and news from Fiscal.ai. |
 | `lmty` | [LMTY](third_party/lmty/) | Cursor | Integrations | Read tracked competitors, competitive intelligence reports, change logs, evidence, social mentions, and market feeds for your products, and browse LMTY's public Markets, event timelines, and company, product, and person profiles. |
 | `sabre-developer-hub` | [Sabre Developer Hub](third_party/sabre-developer-hub/) | Cursor | Integrations | Search and read Sabre Developer Hub documentation, OpenAPI specs, and Sabre-published agent skills for travel APIs, SDKs, and product collections. |
+| `freshbooks` | [FreshBooks](third_party/freshbooks/) | Cursor | Finance and Legal | Manage invoices, clients, expenses, bills, time tracking, and accounting reports. |
+| `campfire` | [Campfire](third_party/campfire/) | Cursor | Finance and Legal | Pull financial statements, ledgers, AR/AP, revenue recognition, and close status, and ask Ember about your books. |
+| `easyship` | [Easyship](third_party/easyship/) | Cursor | Integrations | Compare courier rates, create shipments, buy labels, book pickups, track parcels, and read shipping analytics across 550+ couriers. |
 Author values match each plugin’s `plugin.json` `author.name` (Cursor lists `plugins@cursor.com` in the manifest).
 
 ## Repository structure
