@@ -33,3 +33,7 @@ build/
 
 # Logs
 *.log
+
+# Local eval outputs & hillclimb logs
+evals/*/results/
+evals/*/decision.tsv

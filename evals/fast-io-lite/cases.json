@@ -1,0 +1,48 @@
+{
+  "single_turn": [
+    {
+      "id": "simple_ro",
+      "kind": "simple_ro",
+      "description": "点名读根目录文件指定行，不应触发 pstack，应 1 步直读",
+      "prompt": "只看看 pricing.js 第 1-10 行写了什么，别改。"
+    },
+    {
+      "id": "medium_ro_neg",
+      "kind": "simple_ro",
+      "description": "跨 2 个文件查调用点负样本，不应误触发 poteto-help",
+      "prompt": "帮我查一下 cart.js 和 invoice.js 里是怎么调用 calculatePrice 的，列一下文件、行号和参数就行，别改。"
+    },
+    {
+      "id": "discuss_no_edit",
+      "kind": "simple_ro",
+      "description": "方案讨论但不让动手，不得偷写，也不应误触发重只查",
+      "prompt": "你看看 pricing.js 里 calculatePrice 如果传了负数 price 或大于 1 的 discount 会怎样？先别改，简单说下怎么处理更好。"
+    },
+    {
+      "id": "heavy_ro_concept",
+      "kind": "heavy_ro",
+      "description": "概念/术语/设计盲区梳理，应自动读 poteto-help 并命中只读 skill（如 reframe）",
+      "prompt": "先别写代码。我想做一个能防止多个异步任务同时改同一份本地配置、出问题还能回滚的机制，但我不太确定业内怎么叫这类设计，帮我系统梳理下专业术语、相邻领域思路和设计盲区。"
+    },
+    {
+      "id": "heavy_ro_blast",
+      "kind": "heavy_ro",
+      "description": "跨文件入参重构影响面与隐蔽风险，应自动命中只读 skill（如 blast-radius）",
+      "prompt": "先别改代码，帮我分析一下这个仓库里如果把 pricing.js 中 calculatePrice 的入参从 (price, discount) 改成对象 ({ price, discount, tax })，会影响哪些文件、有什么隐蔽风险？"
+    },
+    {
+      "id": "approved_edit",
+      "kind": "edit",
+      "description": "明确动手并验证，应在首次写入前先读 poteto-mode 并输出对应回执",
+      "prompt": "开始动手改：给 pricing.js 增加一个导出函数 formatCents(cents) 返回如 \"$12.34\" 的字符串，并用 node 测一下。"
+    }
+  ],
+  "multi_turn": [
+    {
+      "id": "multiturn_reuse",
+      "description": "先重只查再同一会话动手，验证第二轮不重复读取 agy.md",
+      "turn1_prompt": "先别改代码，帮我分析一下这个仓库里如果把 pricing.js 中 calculatePrice 的入参从 (price, discount) 改成对象 ({ price, discount, tax })，会影响哪些文件、有什么隐蔽风险？",
+      "turn2_prompt": "好，先不改 calculatePrice 签名；现在开始动手改：只给 pricing.js 增加一个导出函数 formatCents(cents) 返回如 \"$12.34\" 的字符串，并用 node 测一下。"
+    }
+  ]
+}
