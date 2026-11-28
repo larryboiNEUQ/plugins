@@ -1,9 +1,13 @@
 {
   "name": "fast-io-lite",
   "displayName": "Fast IO Lite",
-  "version": "1.2.0",
+  "version": "2.0.3",
   "description": "Reduce agent round-trips, batch parallel file reads, and keep answers concise without desktop command-whitelist constraints.",
   "license": "MIT",
   "category": "developer-tools",
-  "rules": "./rules/fast-io-lite.mdc"
+  "rules": [
+    "./rules/fast-io-lite.mdc",
+    "./rules/fast-io-lite-pstack.mdc",
+    "./rules/fast-io-lite-receipt.mdc"
+  ]
 }

@@ -1,5 +1,5 @@
 ---
-description: 快速检索与读写规则（fast-io-lite）：先查后改、按需调用 pstack、每轮末尾附 pstack 回执、窄搜精读、回答简短
+description: 快速检索与读写规则（fast-io-lite）：先查后改、窄搜精读、少拆回合、回答简短；pstack 入口与轮次回执见同插件的另两份规则
 alwaysApply: true
 ---
 
@@ -7,18 +7,8 @@ alwaysApply: true
 
 目标：用最少的模型回合完成任务，减少无效等待与冗长输出。
 
-## 0. 行动门禁：先查后报，按需调用 pstack
-- **`pstack` 统一入口**：pstack 的 skill 多数不会出现在可用 skill 列表里，要按路径读取。目录以本会话 `/poteto-mode` 附带的路径为准；没有时用 Glob 在 `~/.cursor/plugins/cache/cursor-public/pstack/` 下找 `skills/poteto-help/SKILL.md`，多个结果时取 `.cursor-plugin/plugin.json` 里 `version` 最高的那份；同一会话复用找到的目录。已读内容可复用，仅在当前上下文丢失执行所需内容时补读。
+## 0. 行动门禁：先查后改
 - **未明确要求动手前，只查不改**：当用户是在提问、排查原因、看代码、讨论方案，或要求“先看看 / 查查 / 汇报一下”且未明确要求动手修改时，**严禁**用 `StrReplace` / `Write` / `Delete` / `EditNotebook`、MCP 写操作或 Shell 写入（如 `Set-Content`、`>`）改任何项目文件，也不要运行带写副作用的命令（如 `git commit`、`git push`、改配置、装包）。用户用 `/poteto-mode` 发来修复或实现类任务时算已获准动手。
-- **只查任务怎么选 skill**：普通短问答、查单个文件或命令状态直接回答，不查 `pstack`；但凡涉及**梳理术语/需求/架构、分析改动影响面与风险、跨文件原理排查、多视角评审或状态流建模**等重只查任务，**必须先读 `skills/poteto-help/SKILL.md` 的 `Pick a skill` 表**，选出最匹配的只读 skill（如 `/how`、`/why`、`/blast-radius`、`/interrogate`；都不合适时用 `/poteto-mode` 的 Investigation playbook）读取并按其执行，全程仍严禁写操作。
-- **获准动手后，每次落实修改都按 `/poteto-mode` 执行**：一旦用户明确表示开始修改或实施（例如“开始做”、“动手改”、“直接改”、“修掉它”、“按这个做”），在动手或发出修改指令前，先读取 `skills/poteto-mode/SKILL.md`、所选 playbook 与适用原则叶子文件，完成改动前步骤后再按其余步骤执行。同一任务里的追加和微调沿用已选 playbook、任务清单和 PR，只补跑受影响的步骤，不从头重开流程。
-- **作为子代理**收到父代理的修改任务时，按父代理 brief 和 `poteto-mode` 的 Subagents 段执行，不另选 playbook，不另开任务清单或 PR。
-- **轮次回执（必填）**：每次向用户交还控制权前（含闲聊、短答、澄清、等授权、报错或阻塞），回复末尾必须附有且仅有一份单行本轮回执。仅当本轮还会自行继续时，中途进度消息不附；直接输出正文，不要包进代码块。
-  - 未尝试写入且未向工具或代理发出修改指令时，末行写 `[轮次: 只查 | pstack: <实跑skill>]`。
-  - 只要尝试写入或发出修改指令（含临时文件、外部工具修改、失败或已撤销），末行写 `[轮次: 动手 | pstack: <实跑skill>]`。
-  - `<实跑skill>` 写本轮实际按其执行的 skill，本轮新读或沿用本会话已读的都算，子代理回报里写明执行的也算；多个按执行顺序用 `+` 连接（如 `poteto-mode/bug-fix + unslop`）；`poteto-help` 只用来选 skill 时不算。
-  - 一个都没用写 `未启用`；用了但流程没走完，在名字后加 `（未完成）`；动手却没按 `poteto-mode` 执行写 `未执行`。
-  - 回执是固定格式标签，冒号照写，不受正文“句中不用冒号”的限制。
 
 ## 1. 用工具验证，按阶段报进度
 - 优先使用现有工具和 skill 去查询、验证并推进任务，拿到真实结果再下结论，不要凭记忆猜测。
